@@ -14,7 +14,6 @@
             --text-main: #ffffff;
             --text-muted: #a0a0aa;
             --accent: #2563eb;
-            --accent-hover: #1d4ed8;
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
@@ -28,17 +27,14 @@
         header h1 { font-size: 22px; font-weight: 700; color: var(--text-main); }
         header p { font-size: 13px; color: var(--text-muted); }
 
-        /* Botones de Respaldo */
         .backup-section { display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; }
-        .btn-backup { padding: 10px 14px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; border: none; flex: 1; display: flex; justify-content: center; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-backup { padding: 10px 14px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; border: none; flex: 1; display: flex; justify-content: center; align-items: center; gap: 5px; }
         .btn-backup.export { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--success); color: var(--success); }
-        .btn-backup.export:hover { background: var(--success); color: #fff; }
         .btn-backup.import { background: rgba(37, 99, 235, 0.15); border: 1px solid var(--accent); color: var(--accent); }
-        .btn-backup.import:hover { background: var(--accent); color: #fff; }
 
-        /* Contenedor de Alertas Exclusivas */
+        /* Contenedor de Alertas */
         .alert-box { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); border-radius: 14px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .alert-title { font-size: 14px; font-weight: 600; color: var(--warning); display: flex; align-items: center; gap: 8px; }
+        .alert-title { font-size: 14px; font-weight: 600; color: var(--warning); }
         .alert-text { font-size: 18px; font-weight: 700; color: #fff; }
         .alert-btn { background: var(--warning); color: #000; border: none; padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; align-self: flex-start; }
 
@@ -46,13 +42,22 @@
         
         .card { background: var(--bg-surface); border-radius: 16px; padding: 20px; border: 1px solid #2d2d34; margin-bottom: 25px; }
         
-        .cierre-display { text-align: center; padding: 15px; background: var(--bg-card); border-radius: 12px; margin-bottom: 15px; border: 1px solid #3a3a44; }
-        .cierre-monto { font-size: 32px; font-weight: 700; color: var(--success); margin-top: 5px; }
+        /* Cierre Display con Desglose */
+        .cierre-display { background: var(--bg-card); border-radius: 12px; margin-bottom: 15px; border: 1px solid #3a3a44; overflow: hidden; }
+        .cierre-row { display: flex; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #3a3a44; font-size: 14px; }
+        .cierre-row.total-general { background: rgba(255,255,255,0.03); border-bottom: none; font-weight: 700; font-size: 16px; padding: 12px 15px; }
+        .val-efectivo { color: #fff; font-weight: 600; }
+        .val-nequi { color: #818cf8; font-weight: 600; }
+        .val-total { color: var(--success); }
 
-        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        input, select { background: var(--bg-card); border: 1px solid #3a3a44; padding: 12px; border-radius: 10px; color: #fff; font-size: 14px; width: 100%; outline: none; }
-        
-        button.btn-main { background: var(--accent); color: #fff; border: none; padding: 14px; width: 100%; font-size: 15px; font-weight: 600; border-radius: 10px; cursor: pointer; }
+        /* Botonera Rápida */
+        .input-box { margin-bottom: 15px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .btn-quick { border: none; padding: 12px; font-size: 13px; font-weight: 600; border-radius: 10px; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-quick.in-efec { background: #15803d; } /* Verde oscuro */
+        .btn-quick.in-neq { background: #4338ca; }  /* Morado/Azul Nequi */
+        .btn-quick.out-efec { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); color: var(--danger); }
+        .btn-quick.out-neq { background: rgba(168, 85, 247, 0.2); border: 1px solid #a855f7; color: #c084fc; }
 
         .fiados-list, .proveedores-list { display: flex; flex-direction: column; gap: 12px; }
         .item-row { background: var(--bg-card); padding: 15px; border-radius: 12px; border: 1px solid #3a3a44; display: flex; justify-content: space-between; align-items: center; }
@@ -64,7 +69,6 @@
         
         .item-monto { font-size: 18px; font-weight: 700; }
         .monto-deuda { color: var(--danger); }
-        .monto-prov { color: var(--warning); }
         
         .actions-row { display: flex; gap: 6px; align-items: center; }
         .btn-action { border: none; padding: 8px 10px; font-size: 13px; font-weight: 500; border-radius: 8px; cursor: pointer; }
@@ -82,30 +86,41 @@
         <p>Marcos Fuentes • Gestión de Negocio</p>
     </header>
 
-    <!-- ZONA DE RESPALDOS -->
     <div class="backup-section">
         <button class="btn-backup export" onclick="exportarDatos()">💾 Descargar Copia</button>
         <button class="btn-backup import" onclick="importarDatos()">📂 Restaurar Copia</button>
     </div>
 
-    <!-- ZONA DE RECORDATORIOS ENLAZADOS -->
     <div id="contenedor-recordatorios"></div>
 
-    <!-- SECCIÓN 1: CIERRE DE CAJA -->
-    <div class="section-title">📊 Cierre de Caja Diario</div>
+    <!-- SECCIÓN 1: CIERRE DE CAJA MEJORADO -->
+    <div class="section-title">📊 Caja y Métodos de Pago</div>
     <div class="card">
         <div class="cierre-display">
-            <div>Total Acumulado Hoy</div>
-            <div class="cierre-monto" id="cierre-total">$0</div>
+            <div class="cierre-row">
+                <span>💵 En Efectivo:</span>
+                <span class="val-efectivo" id="caja-efectivo">$0</span>
+            </div>
+            <div class="cierre-row">
+                <span>📱 En Nequi:</span>
+                <span class="val-nequi" id="caja-nequi">$0</span>
+            </div>
+            <div class="cierre-row total-general">
+                <span>📈 Total del Día:</span>
+                <span class="val-total" id="caja-total">$0</span>
+            </div>
         </div>
-        <div class="grid-inputs">
-            <input type="number" id="cierre-monto-input" placeholder="Monto ($)">
-            <select id="cierre-tipo">
-                <option value="ingreso">➕ Ingreso (Venta)</option>
-                <option value="egreso">➖ Egreso (Gasto/Pago)</option>
-            </select>
+        
+        <div class="input-box">
+            <input type="number" id="cierre-monto-input" placeholder="Monto del movimiento ($)">
+            
+            <div class="btn-grid">
+                <button class="btn-quick in-efec" onclick="registrarMovimiento('ingreso', 'efectivo')">➕ Venta Efectivo</button>
+                <button class="btn-quick in-neq" onclick="registrarMovimiento('ingreso', 'nequi')">➕ Venta Nequi</button>
+                <button class="btn-quick out-efec" onclick="registrarMovimiento('egreso', 'efectivo')">➖ Gasto Efectivo</button>
+                <button class="btn-quick out-neq" onclick="registrarMovimiento('egreso', 'nequi')">➖ Gasto Nequi</button>
+            </div>
         </div>
-        <button class="btn-main" onclick="registrarCaja()">Registrar en Caja</button>
     </div>
 
     <!-- SECCIÓN 2: CONTROL DE FIADOS -->
@@ -114,9 +129,7 @@
         <button onclick="nuevoCliente()" style="background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer; font-size:14px;">+ Nuevo Cliente</button>
     </div>
     <div class="card">
-        <div class="fiados-list" id="lista-fiados">
-            <!-- Dinámico -->
-        </div>
+        <div class="fiados-list" id="lista-fiados"></div>
     </div>
 
     <!-- SECCIÓN 3: ESTADO DE PROVEEDORES -->
@@ -125,29 +138,38 @@
         <button onclick="nuevoProveedor()" style="background:none; border:none; color:var(--warning); font-weight:600; cursor:pointer; font-size:14px;">+ Nuevo Proveedor</button>
     </div>
     <div class="card">
-        <div class="proveedores-list" id="lista-proveedores">
-            <!-- Dinámico -->
-        </div>
+        <div class="proveedores-list" id="lista-proveedores"></div>
     </div>
 </div>
 
 <script>
+    // Corrección estructural para mantener saldos independientes
     let datosApp = {
-        cierreDiario: 0,
+        cierreEfectivo: 0,
+        cierreNequi: 0,
         clientes: [],
         proveedores: [],
         recordatorios: []
     };
 
+    // Migración automática de versiones viejas si existieran
     if (localStorage.getItem('libreta_inteligente_v4')) {
-        datosApp = JSON.parse(localStorage.getItem('libreta_inteligente_v4'));
+        const viejo = JSON.parse(localStorage.getItem('libreta_inteligente_v4'));
+        datosApp.clientes = viejo.clientes || [];
+        datosApp.proveedores = viejo.proveedores || [];
+        datosApp.recordatorios = viejo.recordatorios || [];
+        datosApp.cierreEfectivo = viejo.cierreDiario || 0; // Migrar total viejo a efectivo por defecto
+        localStorage.removeItem('libreta_inteligente_v4');
+        guardar();
+    } else if (localStorage.getItem('libreta_inteligente_v5')) {
+        datosApp = JSON.parse(localStorage.getItem('libreta_inteligente_v5'));
     }
 
     function guardar() {
-        localStorage.setItem('libreta_inteligente_v4', JSON.stringify(datosApp));
+        localStorage.setItem('libreta_inteligente_v5', JSON.stringify(datosApp));
     }
 
-    // --- NUEVO: SISTEMA DE COPIAS DE SEGURIDAD ---
+    // --- RESPALDOS ---
     function exportarDatos() {
         const dataStr = JSON.stringify(datosApp);
         const blob = new Blob([dataStr], { type: "application/json" });
@@ -158,13 +180,13 @@
         a.download = `Copia_Libreta_${fecha}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        Swal.fire({ icon: 'success', title: 'Copia Descargada', text: 'Se ha guardado un archivo en tu celular con todos los datos. Guárdalo bien.', background: '#1a1a1e', color: '#fff' });
+        Swal.fire({ icon: 'success', title: 'Copia Descargada', background: '#1a1a1e', color: '#fff' });
     }
 
     function importarDatos() {
         Swal.fire({
             title: '¿Restaurar copia?',
-            text: "Esto reemplazará los datos actuales por los del archivo que subas.",
+            text: "Se reemplazarán los datos de la pantalla.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sí, restaurar',
@@ -184,9 +206,9 @@
                             guardar();
                             actualizarPantalla();
                             renderRecordatorios();
-                            Swal.fire({ icon: 'success', title: 'Restaurado', text: 'Tus datos han vuelto.', background: '#1a1a1e', color: '#fff' });
+                            Swal.fire({ icon: 'success', title: 'Restaurado', background: '#1a1a1e', color: '#fff' });
                         } catch (error) {
-                            Swal.fire({ icon: 'error', title: 'Error', text: 'El archivo no es válido.', background: '#1a1a1e', color: '#fff' });
+                            Swal.fire({ icon: 'error', title: 'Error en archivo', background: '#1a1a1e', color: '#fff' });
                         }
                     };
                     reader.readAsText(file);
@@ -196,18 +218,40 @@
         });
     }
 
-    // --- LÓGICA DE RECORDATORIOS DE PROVEEDORES ---
+    // --- NUEVA BOTONERA RAPIDA DE MOVIMIENTOS ---
+    function registrarMovimiento(tipo, metodo) {
+        const montoInput = document.getElementById('cierre-monto-input');
+        const monto = parseFloat(montoInput.value);
+
+        if (!monto || monto <= 0) {
+            Swal.fire({ icon: 'error', title: 'Monto inválido', background: '#1a1a1e', color: '#fff' });
+            return;
+        }
+
+        const factor = (tipo === 'ingreso' ? 1 : -1);
+
+        if (metodo === 'efectivo') {
+            datosApp.cierreEfectivo += (monto * factor);
+        } else {
+            datosApp.cierreNequi += (monto * factor);
+        }
+
+        montoInput.value = '';
+        guardar();
+        actualizarPantalla();
+    }
+
+    // --- RECORDATORIOS PROVEEDORES ---
     function renderRecordatorios() {
         const contenedor = document.getElementById('contenedor-recordatorios');
         contenedor.innerHTML = '';
-        
         datosApp.recordatorios.forEach((rec, index) => {
             contenedor.innerHTML += `
                 <div class="alert-box">
                     <div class="alert-title">🔔 RECORDATORIO ENLAZADO: ${rec.proveedor.toUpperCase()}</div>
                     <div class="alert-text">
                         Pasa el <span style="color:var(--warning);">${rec.dia}</span>. 
-                        <span style="display:block; font-size:24px; color:#fff; margin-top:5px;">Valor: $${rec.valor.toLocaleString()}</span>
+                        <span style="display:block; font-size:22px; color:#fff; margin-top:5px;">Valor: $${rec.valor.toLocaleString()}</span>
                     </div>
                     <button class="alert-btn" onclick="eliminarRecordatorio(${index})">✔ Confirmar y Quitar Aviso</button>
                 </div>
@@ -217,75 +261,35 @@
 
     function crearRecordatorioId(provIndex) {
         const prov = datosApp.proveedores[provIndex];
-        
         Swal.fire({
-            title: `Recordatorio para ${prov.nombre}`,
-            background: '#1a1a1e',
-            color: '#fff',
+            title: `Recordatorio: ${prov.nombre}`,
+            background: '#1a1a1e', color: '#fff',
             html: `
-                <input id="rec-dia" class="swal2-input" placeholder="Ej: Martes 14, Mañana..." style="margin-bottom:10px; background:#26262b; color:#fff;">
-                <input id="rec-valor" type="number" class="swal2-input" placeholder="Monto a pagar ($)" style="background:#26262b; color:#fff;">
+                <input id="rec-dia" class="swal2-input" placeholder="Ej: Martes" style="margin-bottom:10px; background:#26262b; color:#fff;">
+                <input id="rec-valor" type="number" class="swal2-input" placeholder="Monto ($)" style="background:#26262b; color:#fff;">
             `,
-            focusConfirm: false,
             showCancelButton: true,
             confirmButtonText: 'Crear Alerta',
             preConfirm: () => {
-                const dia = document.getElementById('rec-dia').value;
-                const valor = document.getElementById('rec-valor').value;
-                if (!dia || !valor) {
-                    Swal.showValidationMessage('Por favor llena ambos campos');
-                }
-                return { dia, valor: parseFloat(valor) };
+                return { dia: document.getElementById('rec-dia').value, valor: parseFloat(document.getElementById('rec-valor').value) };
             }
         }).then((result) => {
-            if (result.isConfirmed) {
-                datosApp.recordatorios.push({
-                    proveedor: prov.nombre,
-                    dia: result.value.dia,
-                    valor: result.value.valor
-                });
-                guardar();
-                renderRecordatorios();
-                Swal.fire({ icon: 'success', title: 'Alerta Creada', text: 'El recordatorio ya aparece arriba.', timer: 1500, showConfirmButton: false, background: '#1a1a1e', color: '#fff' });
+            if (result.isConfirmed && result.value.dia && result.value.valor) {
+                datosApp.recordatorios.push({ proveedor: prov.nombre, dia: result.value.dia, valor: result.value.valor });
+                guardar(); renderRecordatorios();
             }
         });
     }
 
     function eliminarRecordatorio(index) {
         datosApp.recordatorios.splice(index, 1);
-        guardar();
-        renderRecordatorios();
-        Swal.fire({ icon: 'success', title: 'Completado', text: 'Aviso retirado del sistema.', timer: 1200, showConfirmButton: false, background: '#1a1a1e', color: '#fff' });
+        guardar(); renderRecordatorios();
     }
 
-    // --- LÓGICA DE CIERRE DE CAJA ---
-    function registrarCaja() {
-        const montoInput = document.getElementById('cierre-monto-input');
-        const tipo = document.getElementById('cierre-tipo').value;
-        const monto = parseFloat(montoInput.value);
-
-        if (!monto || monto <= 0) {
-            Swal.fire({ icon: 'error', title: 'Error', text: 'Ingresa un monto válido.', background: '#1a1a1e', color: '#fff' });
-            return;
-        }
-
-        datosApp.cierreDiario += (tipo === 'ingreso' ? monto : -monto);
-        montoInput.value = '';
-        guardar();
-        actualizarPantalla();
-    }
-
-    // --- LÓGICA DE FIADOS (PERSONAS) ---
+    // --- FIADOS ---
     function nuevoCliente() {
-        Swal.fire({
-            title: 'Nuevo Cliente Fiado',
-            input: 'text',
-            inputPlaceholder: 'Nombre de la persona...',
-            showCancelButton: true,
-            background: '#1a1a1e', color: '#fff',
-            preConfirm: (v) => { if (!v) Swal.showValidationMessage('El nombre es obligatorio'); return v; }
-        }).then((res) => {
-            if (res.isConfirmed) {
+        Swal.fire({ title: 'Nuevo Cliente', input: 'text', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((res) => {
+            if (res.isConfirmed && res.value) {
                 datosApp.clientes.push({ nombre: res.value, saldo: 0, cambiosNombre: 0 });
                 guardar(); actualizarPantalla();
             }
@@ -295,19 +299,9 @@
     function editarNombre(index) {
         let c = datosApp.clientes[index];
         if (c.cambiosNombre >= 2) return;
-
-        Swal.fire({
-            title: 'Cambiar Nombre',
-            text: `Te quedan ${2 - c.cambiosNombre} cambios de nombre libres.`,
-            input: 'text',
-            inputValue: c.nombre,
-            showCancelButton: true,
-            background: '#1a1a1e', color: '#fff',
-            preConfirm: (v) => { if (!v) Swal.showValidationMessage('No puede estar vacío'); return v; }
-        }).then((res) => {
-            if (res.isConfirmed) {
-                c.nombre = res.value;
-                c.cambiosNombre += 1;
+        Swal.fire({ title: 'Editar Nombre', input: 'text', inputValue: c.nombre, showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((res) => {
+            if (res.isConfirmed && res.value) {
+                c.nombre = res.value; c.cambiosNombre += 1;
                 guardar(); actualizarPantalla();
             }
         });
@@ -315,16 +309,9 @@
 
     function modificarSaldo(index, accion) {
         const c = datosApp.clientes[index];
-        Swal.fire({
-            title: accion === 'fiar' ? `Fiar a ${c.nombre}` : `Abonar de ${c.nombre}`,
-            input: 'number',
-            inputPlaceholder: 'Monto ($)',
-            showCancelButton: true,
-            background: '#1a1a1e', color: '#fff',
-            preConfirm: (v) => { if (!v || parseFloat(v) <= 0) Swal.showValidationMessage('Monto incorrecto'); return parseFloat(v); }
-        }).then((res) => {
-            if (res.isConfirmed) {
-                c.saldo += (accion === 'fiar' ? res.value : -res.value);
+        Swal.fire({ title: accion === 'fiar' ? `Fiar a ${c.nombre}` : `Abonar de ${c.nombre}`, input: 'number', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((res) => {
+            if (res.isConfirmed && parseFloat(res.value) > 0) {
+                c.saldo += (accion === 'fiar' ? parseFloat(res.value) : -parseFloat(res.value));
                 if (c.saldo < 0) c.saldo = 0;
                 guardar(); actualizarPantalla();
             }
@@ -332,36 +319,18 @@
     }
 
     function eliminarCliente(index) {
-        Swal.fire({
-            title: '¿Eliminar cuenta?',
-            text: `Vas a borrar definitivamente a "${datosApp.clientes[index].nombre}" de la libreta.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            confirmButtonText: 'Sí, borrar',
-            cancelButtonText: 'Cancelar',
-            background: '#1a1a1e', color: '#fff'
-        }).then((result) => {
+        Swal.fire({ title: '¿Eliminar cuenta?', text: 'Se borrará permanentemente.', icon: 'warning', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((result) => {
             if (result.isConfirmed) {
                 datosApp.clientes.splice(index, 1);
-                guardar();
-                actualizarPantalla();
-                Swal.fire({ icon: 'success', title: 'Eliminado', text: 'El cliente ha sido borrado.', timer: 1200, showConfirmButton: false, background: '#1a1a1e', color: '#fff' });
+                guardar(); actualizarPantalla();
             }
         });
     }
 
-    // --- LÓGICA DE PROVEEDORES ---
+    // --- PROVEEDORES ---
     function nuevoProveedor() {
-        Swal.fire({
-            title: 'Registrar Proveedor',
-            input: 'text',
-            inputPlaceholder: 'Nombre de la empresa o distribuidor...',
-            showCancelButton: true,
-            background: '#1a1a1e', color: '#fff',
-            preConfirm: (v) => { if (!v) Swal.showValidationMessage('El nombre es requerido'); return v; }
-        }).then((res) => {
-            if (res.isConfirmed) {
+        Swal.fire({ title: 'Nuevo Proveedor', input: 'text', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((res) => {
+            if (res.isConfirmed && res.value) {
                 datosApp.proveedores.push({ nombre: res.value, saldoPendiente: 0 });
                 guardar(); actualizarPantalla();
             }
@@ -370,31 +339,16 @@
 
     function modificarSaldoProveedor(index) {
         const p = datosApp.proveedores[index];
-        Swal.fire({
-            title: `Factura de ${p.nombre}`,
-            input: 'number',
-            inputPlaceholder: 'Monto de deuda pendiente ($)',
-            showCancelButton: true,
-            background: '#1a1a1e', color: '#fff',
-            preConfirm: (v) => { if (!v) Swal.showValidationMessage('Monto requerido'); return parseFloat(v); }
-        }).then((res) => {
+        Swal.fire({ title: `Factura de ${p.nombre}`, input: 'number', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((res) => {
             if (res.isConfirmed) {
-                p.saldoPendiente = res.value;
+                p.saldoPendiente = parseFloat(res.value) || 0;
                 guardar(); actualizarPantalla();
             }
         });
     }
 
     function eliminarProveedor(index) {
-        Swal.fire({
-            title: '¿Eliminar proveedor?',
-            text: `Se borrará a "${datosApp.proveedores[index].nombre}".`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            confirmButtonText: 'Borrar',
-            background: '#1a1a1e', color: '#fff'
-        }).then((result) => {
+        Swal.fire({ title: '¿Eliminar proveedor?', icon: 'warning', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((result) => {
             if (result.isConfirmed) {
                 datosApp.proveedores.splice(index, 1);
                 guardar(); actualizarPantalla();
@@ -404,21 +358,26 @@
 
     // --- RENDERIZADO GENERAL ---
     function actualizarPantalla() {
-        document.getElementById('cierre-total').innerText = `$${datosApp.cierreDiario.toLocaleString()}`;
+        // Render de montos independientes de caja
+        const totalGen = datosApp.cierreEfectivo + datosApp.cierreNequi;
+        document.getElementById('caja-efectivo').innerText = `$${datosApp.cierreEfectivo.toLocaleString()}`;
+        document.getElementById('caja-nequi').innerText = `$${datosApp.cierreNequi.toLocaleString()}`;
+        document.getElementById('caja-total').innerText = `$${totalGen.toLocaleString()}`;
         
+        // Clientes
         const listaC = document.getElementById('lista-fiados');
-        listaC.innerHTML = datosApp.clientes.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:14px; padding:10px;">Sin clientes registrados.</div>` : '';
+        listaC.innerHTML = datosApp.clientes.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">Sin clientes.</div>` : '';
         datosApp.clientes.forEach((c, index) => {
             listaC.innerHTML += `
                 <div class="item-row">
                     <div class="info-col">
                         <div class="name-row">
                             <span class="item-name">${c.nombre}</span>
-                            ${c.cambiosNombre < 2 ? `<span class="edit-badge" onclick="editarNombre(${index})">📝 (${2 - c.cambiosNombre})</span>` : ''}
+                            ${c.cambiosNombre < 2 ? `<span class="edit-badge" onclick="editarNombre(${index})">📝</span>` : ''}
                         </div>
                     </div>
                     <div class="actions-row">
-                        <div class="item-monto monto-deuda" style="margin-right:10px;">$${c.saldo.toLocaleString()}</div>
+                        <div class="item-monto monto-deuda" style="margin-right:8px;">$${c.saldo.toLocaleString()}</div>
                         <button class="btn-action btn-add-more" onclick="modificarSaldo(${index}, 'fiar')">+ Fiar</button>
                         <button class="btn-action btn-pay" onclick="modificarSaldo(${index}, 'pagar')">✔</button>
                         <button class="btn-action btn-del" onclick="eliminarCliente(${index})">🗑️</button>
@@ -427,17 +386,18 @@
             `;
         });
 
+        // Proveedores
         const listaP = document.getElementById('lista-proveedores');
-        listaP.innerHTML = datosApp.proveedores.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:14px; padding:10px;">Sin proveedores registrados.</div>` : '';
+        listaP.innerHTML = datosApp.proveedores.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">Sin proveedores.</div>` : '';
         datosApp.proveedores.forEach((p, index) => {
             listaP.innerHTML += `
                 <div class="item-row">
                     <div class="info-col">
                         <span class="item-name" onclick="modificarSaldoProveedor(${index})" style="cursor:pointer; text-decoration:underline;">${p.nombre} 📝</span>
-                        <span style="font-size:12px; color:var(--text-muted);">Estado: $${p.saldoPendiente.toLocaleString()}</span>
+                        <span style="font-size:12px; color:var(--text-muted);">Deuda: $${p.saldoPendiente.toLocaleString()}</span>
                     </div>
                     <div class="actions-row">
-                        <button class="btn-action btn-alert-prov" onclick="crearRecordatorioId(${index})">🔔 Crear Recordatorio</button>
+                        <button class="btn-action btn-alert-prov" onclick="crearRecordatorioId(${index})">🔔 Alerta</button>
                         <button class="btn-action btn-del" onclick="eliminarProveedor(${index})">🗑️</button>
                     </div>
                 </div>
