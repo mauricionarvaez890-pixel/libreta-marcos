@@ -24,9 +24,17 @@
         body { background-color: var(--bg-primary); color: var(--text-main); padding: 20px; min-height: 100vh; }
         .container { max-width: 600px; margin: 0 auto; }
         
-        header { text-align: center; margin-bottom: 25px; padding: 15px; background: var(--bg-surface); border-radius: 16px; border: 1px solid #333; }
+        header { text-align: center; margin-bottom: 15px; padding: 15px; background: var(--bg-surface); border-radius: 16px; border: 1px solid #333; }
         header h1 { font-size: 22px; font-weight: 700; color: var(--text-main); }
         header p { font-size: 13px; color: var(--text-muted); }
+
+        /* Botones de Respaldo */
+        .backup-section { display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; }
+        .btn-backup { padding: 10px 14px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; border: none; flex: 1; display: flex; justify-content: center; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-backup.export { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--success); color: var(--success); }
+        .btn-backup.export:hover { background: var(--success); color: #fff; }
+        .btn-backup.import { background: rgba(37, 99, 235, 0.15); border: 1px solid var(--accent); color: var(--accent); }
+        .btn-backup.import:hover { background: var(--accent); color: #fff; }
 
         /* Contenedor de Alertas Exclusivas */
         .alert-box { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); border-radius: 14px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
@@ -74,7 +82,13 @@
         <p>Marcos Fuentes • Gestión de Negocio</p>
     </header>
 
-    <!-- ZONA DE RECORDATORIOS ENLAZADOS (Solo aparecen si se crean desde proveedores) -->
+    <!-- ZONA DE RESPALDOS -->
+    <div class="backup-section">
+        <button class="btn-backup export" onclick="exportarDatos()">💾 Descargar Copia</button>
+        <button class="btn-backup import" onclick="importarDatos()">📂 Restaurar Copia</button>
+    </div>
+
+    <!-- ZONA DE RECORDATORIOS ENLAZADOS -->
     <div id="contenedor-recordatorios"></div>
 
     <!-- SECCIÓN 1: CIERRE DE CAJA -->
@@ -96,7 +110,7 @@
 
     <!-- SECCIÓN 2: CONTROL DE FIADOS -->
     <div class="section-title">
-        <span>👥 Personas que Deben (Fiados)</span>
+        <span>👥 Personas que Deben</span>
         <button onclick="nuevoCliente()" style="background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer; font-size:14px;">+ Nuevo Cliente</button>
     </div>
     <div class="card">
@@ -118,21 +132,68 @@
 </div>
 
 <script>
-    // Estructura de datos limpia desde cero
     let datosApp = {
         cierreDiario: 0,
         clientes: [],
         proveedores: [],
-        recordatorios: [] // Vinculados únicamente a proveedores
+        recordatorios: []
     };
 
-    // Cargar datos guardados
     if (localStorage.getItem('libreta_inteligente_v4')) {
         datosApp = JSON.parse(localStorage.getItem('libreta_inteligente_v4'));
     }
 
     function guardar() {
         localStorage.setItem('libreta_inteligente_v4', JSON.stringify(datosApp));
+    }
+
+    // --- NUEVO: SISTEMA DE COPIAS DE SEGURIDAD ---
+    function exportarDatos() {
+        const dataStr = JSON.stringify(datosApp);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const fecha = new Date().toLocaleDateString().replace(/\//g, '-');
+        a.href = url;
+        a.download = `Copia_Libreta_${fecha}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        Swal.fire({ icon: 'success', title: 'Copia Descargada', text: 'Se ha guardado un archivo en tu celular con todos los datos. Guárdalo bien.', background: '#1a1a1e', color: '#fff' });
+    }
+
+    function importarDatos() {
+        Swal.fire({
+            title: '¿Restaurar copia?',
+            text: "Esto reemplazará los datos actuales por los del archivo que subas.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, restaurar',
+            background: '#1a1a1e', color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            datosApp = JSON.parse(event.target.result);
+                            guardar();
+                            actualizarPantalla();
+                            renderRecordatorios();
+                            Swal.fire({ icon: 'success', title: 'Restaurado', text: 'Tus datos han vuelto.', background: '#1a1a1e', color: '#fff' });
+                        } catch (error) {
+                            Swal.fire({ icon: 'error', title: 'Error', text: 'El archivo no es válido.', background: '#1a1a1e', color: '#fff' });
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
+        });
     }
 
     // --- LÓGICA DE RECORDATORIOS DE PROVEEDORES ---
@@ -345,7 +406,6 @@
     function actualizarPantalla() {
         document.getElementById('cierre-total').innerText = `$${datosApp.cierreDiario.toLocaleString()}`;
         
-        // Render Clientes
         const listaC = document.getElementById('lista-fiados');
         listaC.innerHTML = datosApp.clientes.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:14px; padding:10px;">Sin clientes registrados.</div>` : '';
         datosApp.clientes.forEach((c, index) => {
@@ -367,7 +427,6 @@
             `;
         });
 
-        // Render Proveedores
         const listaP = document.getElementById('lista-proveedores');
         listaP.innerHTML = datosApp.proveedores.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:14px; padding:10px;">Sin proveedores registrados.</div>` : '';
         datosApp.proveedores.forEach((p, index) => {
@@ -386,7 +445,6 @@
         });
     }
 
-    // Inicialización
     if(!datosApp.recordatorios) datosApp.recordatorios = [];
     renderRecordatorios();
     actualizarPantalla();
