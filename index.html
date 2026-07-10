@@ -140,7 +140,8 @@
             <button class="btn-close-day" onclick="ejecutarCierreDeCaja()">🔒 Cerrar Caja de Hoy y Reiniciar</button>
         </div>
         
-        <input type="number" id="cierre-monto-input" class="cierre-input" placeholder="0">
+        <!-- ESCUDO 3: inputmode y pattern para obligar teclado numérico móvil -->
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="cierre-monto-input" class="cierre-input" placeholder="0">
         
         <div class="btn-grid">
             <button class="btn-quick in-efec" onclick="registrarMovimiento('ingreso', 'efectivo')">➕ Venta Efectivo</button>
@@ -158,7 +159,7 @@
     <div class="card">
         <div class="search-container">
             <span class="search-icon">🔍</span>
-            <input type="text" id="busqueda-cliente" class="search-input" placeholder="Buscar cliente por nombre..." oninput="filtrarYRenderizarClientes()">
+            <input type="text" id="busqueda-cliente" class="search-input" placeholder="Buscar cliente por nombre..." oninput="ejecutarBusquedaConLupa()">
         </div>
 
         <div class="filter-tabs">
@@ -192,17 +193,15 @@
         clientes: [],
         proveedores: [],
         recordatorios: [],
-        historialCierres: [] // Estructura nueva para registrar días cerrados
+        historialCierres: []
     };
 
-    // Variables de estado internas
     let mostrarTodosLosClientes = false;
-    let filtroClienteActual = 'todos'; // 'todos' o 'deudores'
+    let filtroClienteActual = 'todos';
 
     if (localStorage.getItem('libreta_inteligente_v6')) {
         datosApp = JSON.parse(localStorage.getItem('libreta_inteligente_v6'));
     } else if (localStorage.getItem('libreta_inteligente_v5')) {
-        // Migración automática limpia desde la versión anterior sin pérdida
         const viejaData = JSON.parse(localStorage.getItem('libreta_inteligente_v5'));
         datosApp = { ...datosApp, ...viejaData };
     }
@@ -251,7 +250,6 @@
         montoInput.value = ''; guardar(); actualizarPantalla();
     }
 
-    // --- FUNCIÓN HISTORIAL: CERRAR DÍA ---
     function ejecutarCierreDeCaja() {
         const totalHoy = datosApp.cierreEfectivo + datosApp.cierreNequi;
         if(totalHoy === 0) {
@@ -267,12 +265,12 @@
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sí, cerrar día',
+            cancelButtonText: 'Cancelar',
             background: '#1a1a1e', color: '#fff'
         }).then((result) => {
             if (result.isConfirmed) {
                 if(!datosApp.historialCierres) datosApp.historialCierres = [];
                 
-                // Guardar en el histórico
                 datosApp.historialCierres.unshift({
                     fecha: tiempo.fecha,
                     efectivo: datosApp.cierreEfectivo,
@@ -280,7 +278,6 @@
                     total: totalHoy
                 });
 
-                // Reiniciar caja a cero
                 datosApp.cierreEfectivo = 0;
                 datosApp.cierreNequi = 0;
                 
@@ -291,12 +288,24 @@
         });
     }
 
+    // ESCUDO 1: Alerta de confirmación segura para no borrar cierres por error
     function eliminarCierreHistorico(index) {
-        Swal.fire({ title: '¿Borrar este registro?', icon: 'warning', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((result) => {
+        Swal.fire({ 
+            title: '¿Borrar este registro?', 
+            text: "Esta acción eliminará el registro contable de este día de forma permanente.",
+            icon: 'warning', 
+            showCancelButton: true, 
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: 'var(--danger)',
+            background: '#1a1a1e', 
+            color: '#fff' 
+        }).then((result) => {
             if (result.isConfirmed) { 
                 datosApp.historialCierres.splice(index, 1); 
                 guardar(); 
                 actualizarPantalla(); 
+                Swal.fire({ title: 'Eliminado', text: 'El registro ha sido removido.', icon: 'success', background: '#1a1a1e', color: '#fff' });
             }
         });
     }
@@ -340,11 +349,12 @@
             background: '#1a1a1e', color: '#fff',
             html: `
                 <input id="prov-nombre" class="swal2-input" placeholder="Nombre" style="margin-bottom:12px; background:#26262b; color:#fff;">
-                <input id="prov-monto" type="number" class="swal2-input" placeholder="Monto ($)" style="margin-bottom:12px; background:#26262b; color:#fff;">
+                <input id="prov-monto" type="text" inputmode="numeric" pattern="[0-9]*" class="swal2-input" placeholder="Monto ($)" style="margin-bottom:12px; background:#26262b; color:#fff;">
                 <input id="prov-fecha" type="date" class="swal2-input" style="background:#26262b; color:#fff;">
             `,
             showCancelButton: true,
             confirmButtonText: 'Guardar',
+            cancelButtonText: 'Cancelar',
             preConfirm: () => {
                 const nombre = document.getElementById('prov-nombre').value.trim();
                 const monto = parseFloat(document.getElementById('prov-monto').value) || 0;
@@ -397,10 +407,11 @@
             background: '#1a1a1e', color: '#fff',
             html: `
                 <input id="cli-nombre" class="swal2-input" placeholder="Nombre" style="margin-bottom:12px; background:#26262b; color:#fff;">
-                <input id="cli-inicial" type="number" class="swal2-input" placeholder="Monto inicial ($ opcional)" style="background:#26262b; color:#fff;">
+                <input id="cli-inicial" type="text" inputmode="numeric" pattern="[0-9]*" class="swal2-input" placeholder="Monto inicial ($ opcional)" style="background:#26262b; color:#fff;">
             `,
             showCancelButton: true,
             confirmButtonText: 'Registrar',
+            cancelButtonText: 'Cancelar',
             preConfirm: () => {
                 const nombre = document.getElementById('cli-nombre').value.trim();
                 const inicial = parseFloat(document.getElementById('cli-inicial').value) || 0;
@@ -419,7 +430,19 @@
 
     function modificarSaldo(index, accion) {
         const c = datosApp.clientes[index];
-        Swal.fire({ title: accion === 'fiar' ? `Fiar a ${c.nombre}` : `Abonar de ${c.nombre}`, input: 'number', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((res) => {
+        Swal.fire({ 
+            title: accion === 'fiar' ? `Fiar a ${c.nombre}` : `Abonar de ${c.nombre}`, 
+            input: 'text',
+            inputAttributes: {
+                inputmode: 'numeric',
+                pattern: '[0-9]*'
+            },
+            showCancelButton: true, 
+            confirmButtonText: 'Aceptar',
+            cancelButtonText: 'Cancelar',
+            background: '#1a1a1e', 
+            color: '#fff' 
+        }).then((res) => {
             const valor = parseFloat(res.value);
             if (res.isConfirmed && valor > 0) {
                 c.saldo += (accion === 'fiar' ? valor : -valor);
@@ -456,7 +479,6 @@
         });
     }
 
-    // --- FUNCIÓN FILTROS: CAMBIAR TABS ---
     function cambiarFiltroClientes(tipo) {
         filtroClienteActual = tipo;
         document.getElementById('filtro-todos').classList.toggle('active', tipo === 'todos');
@@ -464,7 +486,17 @@
         filtrarYRenderizarClientes();
     }
 
-    // --- FILTRADO INTELIGENTE Y RENDER DE CLIENTES CON ESTADO "AL DÍA" ---
+    // ESCUDO 2: Forzar pestaña "Todos" si el usuario escribe activamente en la lupa
+    function ejecutarBusquedaConLupa() {
+        const query = document.getElementById('busqueda-cliente').value.trim();
+        if (query !== '' && filtroClienteActual === 'deudores') {
+            filtroClienteActual = 'todos';
+            document.getElementById('filtro-todos').classList.add('active');
+            document.getElementById('filtro-deudores').classList.remove('active');
+        }
+        filtrarYRenderizarClientes();
+    }
+
     function filtrarYRenderizarClientes() {
         const query = document.getElementById('busqueda-cliente').value.toLowerCase().trim();
         const listaC = document.getElementById('lista-fiados');
@@ -473,15 +505,12 @@
         listaC.innerHTML = '';
         contenedorVerMas.innerHTML = '';
 
-        // Mapear con su índice original para no perder las referencias al modificar datos
         let clientesFiltrados = datosApp.clientes.map((c, originalIndex) => ({ ...c, originalIndex }));
         
-        // 1. Filtrar por Lupa de Búsqueda
         if (query !== '') {
             clientesFiltrados = clientesFiltrados.filter(c => c.nombre.toLowerCase().includes(query));
         }
 
-        // 2. Filtrar por Tab Rápido (Solo Deudores)
         if (filtroClienteActual === 'deudores') {
             clientesFiltrados = clientesFiltrados.filter(c => c.saldo > 0);
         }
@@ -493,12 +522,10 @@
             return;
         }
 
-        // Aplicar límite de 5 si no hay búsqueda activa y no se ha marcado expandir todo
         let limite = (mostrarTodosLosClientes || query !== '') ? totalEncontrados : 5;
         let mostrados = clientesFiltrados.slice(0, limite);
 
         mostrados.forEach((c) => {
-            // Estilo dinámico si está "Al día" o tiene deuda
             let visualizacionSaldo = '';
             if (c.saldo === 0) {
                 visualizacionSaldo = `<div class="item-monto" style="color: var(--success); margin-right:8px; font-size:15px; font-weight:600;">Al día</div>`;
@@ -525,7 +552,6 @@
             `;
         });
 
-        // Control del botón Expandir / Contraer lista (solo si no hay búsqueda activa)
         if (totalEncontrados > 5 && !mostrarTodosLosClientes && query === '') {
             contenedorVerMas.innerHTML = `
                 <button class="btn-ver-mas" onclick="conmutarVerTodos()">👁️ Ver todos los clientes (${totalEncontrados})</button>
@@ -545,21 +571,17 @@
     function editedName(idx) { editarNombre(idx); }
 
     function actualizarPantalla() {
-        // Totales de Caja Principal
         const totalGen = datosApp.cierreEfectivo + datosApp.cierreNequi;
         document.getElementById('caja-efectivo').innerText = `$${datosApp.cierreEfectivo.toLocaleString()}`;
         document.getElementById('caja-nequi').innerText = `$${datosApp.cierreNequi.toLocaleString()}`;
         document.getElementById('caja-total').innerText = `$${totalGen.toLocaleString()}`;
         
-        // Resumen de Deudores Arriba
         let totalFiadoAcumulado = 0; let cantPersonasDeben = 0;
         datosApp.clientes.forEach(c => { if(c.saldo > 0) { totalFiadoAcumulado += c.saldo; cantPersonasDeben++; } });
         document.getElementById('resumen-fiados').innerText = `${cantPersonasDeben} deben total: $${totalFiadoAcumulado.toLocaleString()}`;
 
-        // Renderizar sección clientes
         filtrarYRenderizarClientes();
 
-        // Renderizar Historial de Cierres Diarios
         const listaCierres = document.getElementById('lista-cierres-historicos');
         if(!datosApp.historialCierres) datosApp.historialCierres = [];
         
@@ -581,7 +603,6 @@
             `;
         });
 
-        // Proveedores
         const listaP = document.getElementById('lista-proveedores');
         listaP.innerHTML = datosApp.proveedores.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">Sin proveedores registrados.</div>` : '';
         datosApp.proveedores.forEach((p, index) => {
@@ -604,7 +625,6 @@
         });
     }
 
-    // Encendido Inicial
     renderRecordatorios();
     actualizarPantalla();
 </script>
