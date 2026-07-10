@@ -43,21 +43,28 @@
         
         .card { background: var(--bg-surface); border-radius: 16px; padding: 20px; border: 1px solid #2d2d34; margin-bottom: 25px; }
         
-        /* Buscador / Lupa Estilo Minimalista */
+        /* Buscador / Lupa y Filtros Estilo Minimalista */
         .search-container { position: relative; margin-bottom: 15px; }
         .search-input { width: 100%; background: var(--bg-card); border: 1px solid #3a3a44; border-radius: 10px; padding: 10px 12px 10px 38px; color: #fff; font-size: 14px; outline: none; }
         .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
+        
+        .filter-tabs { display: flex; gap: 8px; margin-bottom: 15px; }
+        .filter-btn { background: var(--bg-card); border: 1px solid #3a3a44; color: var(--text-muted); padding: 6px 14px; font-size: 12px; font-weight: 500; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+        .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
         /* Caja Grande */
         .cierre-display-grande { background: var(--bg-card); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; border: 1px solid #3a3a44; }
         .cierre-display-grande .titulo-central { font-size: 15px; color: var(--text-muted); font-weight: 500; margin-bottom: 5px; }
         .cierre-display-grande .monto-central { font-size: 36px; font-weight: 700; color: var(--success); margin-bottom: 15px; }
         
-        .desglose-metodos { display: flex; justify-content: space-around; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; }
+        .desglose-metodos { display: flex; justify-content: space-around; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 15px; }
         .metodo-item { font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
         .metodo-item span:first-child { color: var(--text-muted); font-size: 11px; }
         .metodo-item .val-efec { color: #fff; font-weight: 600; }
-        .metodo-item .val-neq { color: #818cf8; font-weight: 600; }
+        .metodo-item .val-nequi { color: #818cf8; font-weight: 600; }
+
+        .btn-close-day { width: 100%; background: rgba(245, 158, 11, 0.12); border: 1px dashed var(--warning); color: var(--warning); padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-close-day:hover { background: rgba(245, 158, 11, 0.2); }
 
         .cierre-input { width: 100%; background: var(--bg-card); border: 1px solid #3a3a44; border-radius: 8px; padding: 12px; color: #fff; font-size: 15px; margin-bottom: 12px; outline: none; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -67,7 +74,7 @@
         .btn-quick.out-efec { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); }
         .btn-quick.out-neq { background: rgba(168, 85, 247, 0.15); border: 1px solid #a855f7; color: #c084fc; }
 
-        .fiados-list, .proveedores-list { display: flex; flex-direction: column; gap: 12px; }
+        .fiados-list, .proveedores-list, .history-box-list { display: flex; flex-direction: column; gap: 12px; }
         .item-row { background: var(--bg-card); padding: 15px; border-radius: 12px; border: 1px solid #3a3a44; display: flex; justify-content: space-between; align-items: center; }
         
         .info-col { display: flex; flex-direction: column; gap: 2px; flex: 1; }
@@ -129,6 +136,8 @@
                     <span class="val-nequi" id="caja-nequi">$0</span>
                 </div>
             </div>
+
+            <button class="btn-close-day" onclick="ejecutarCierreDeCaja()">🔒 Cerrar Caja de Hoy y Reiniciar</button>
         </div>
         
         <input type="number" id="cierre-monto-input" class="cierre-input" placeholder="0">
@@ -141,7 +150,7 @@
         </div>
     </div>
 
-    <!-- CONTROL DE FIADOS CON BUSCADOR -->
+    <!-- CONTROL DE FIADOS CON BUSCADOR Y FILTROS -->
     <div class="section-title">
         <span>👥 Personas que Deben <span id="resumen-fiados" class="sub-resumen">$0</span></span>
         <button onclick="nuevoCliente()" style="background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer; font-size:14px;">+ Nuevo Cliente</button>
@@ -151,9 +160,20 @@
             <span class="search-icon">🔍</span>
             <input type="text" id="busqueda-cliente" class="search-input" placeholder="Buscar cliente por nombre..." oninput="filtrarYRenderizarClientes()">
         </div>
+
+        <div class="filter-tabs">
+            <button id="filtro-todos" class="filter-btn active" onclick="cambiarFiltroClientes('todos')">Todos</button>
+            <button id="filtro-deudores" class="filter-btn" onclick="cambiarFiltroClientes('deudores')">Solo Deudores</button>
+        </div>
         
         <div class="fiados-list" id="lista-fiados"></div>
         <div id="contenedor-ver-mas"></div>
+    </div>
+
+    <!-- HISTORIAL DE CIERRES ANTERIORES -->
+    <div class="section-title">📅 Historial de Cierres Diarios</div>
+    <div class="card">
+        <div class="history-box-list" id="lista-cierres-historicos"></div>
     </div>
 
     <div class="section-title">
@@ -171,25 +191,31 @@
         cierreNequi: 0,
         clientes: [],
         proveedores: [],
-        recordatorios: []
+        recordatorios: [],
+        historialCierres: [] // Estructura nueva para registrar días cerrados
     };
 
-    // Control de paginación/ver todos
+    // Variables de estado internas
     let mostrarTodosLosClientes = false;
+    let filtroClienteActual = 'todos'; // 'todos' o 'deudores'
 
-    if (localStorage.getItem('libreta_inteligente_v5')) {
-        datosApp = JSON.parse(localStorage.getItem('libreta_inteligente_v5'));
+    if (localStorage.getItem('libreta_inteligente_v6')) {
+        datosApp = JSON.parse(localStorage.getItem('libreta_inteligente_v6'));
+    } else if (localStorage.getItem('libreta_inteligente_v5')) {
+        // Migración automática limpia desde la versión anterior sin pérdida
+        const viejaData = JSON.parse(localStorage.getItem('libreta_inteligente_v5'));
+        datosApp = { ...datosApp, ...viejaData };
     }
 
     function guardar() {
-        localStorage.setItem('libreta_inteligente_v5', JSON.stringify(datosApp));
+        localStorage.setItem('libreta_inteligente_v6', JSON.stringify(datosApp));
     }
 
     function obtenerFechaHoraActual() {
         const d = new Date();
         const fecha = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
         let minutos = d.getMinutes();
-        if (minutos < 10) minutos = '0' + minutos;
+        if (minutos < 10) minutos = '0' + minutes;
         const hora = `${d.getHours()}:${minutos}`;
         return { fecha, completa: `${fecha} a las ${hora}` };
     }
@@ -223,6 +249,56 @@
         if (isNaN(monto) || monto <= 0) return;
         datosApp[metodo === 'efectivo' ? 'cierreEfectivo' : 'cierreNequi'] += (monto * (tipo === 'ingreso' ? 1 : -1));
         montoInput.value = ''; guardar(); actualizarPantalla();
+    }
+
+    // --- FUNCIÓN HISTORIAL: CERRAR DÍA ---
+    function ejecutarCierreDeCaja() {
+        const totalHoy = datosApp.cierreEfectivo + datosApp.cierreNequi;
+        if(totalHoy === 0) {
+            Swal.fire({ title: 'Caja Vacía', text: 'No hay movimientos registrados hoy para cerrar.', icon: 'info', background: '#1a1a1e', color: '#fff' });
+            return;
+        }
+
+        const tiempo = obtenerFechaHoraActual();
+
+        Swal.fire({
+            title: '¿Cerrar caja del día?',
+            text: `Se registrará un total de $${totalHoy.toLocaleString()} y la caja de mañana iniciará en $0.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cerrar día',
+            background: '#1a1a1e', color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                if(!datosApp.historialCierres) datosApp.historialCierres = [];
+                
+                // Guardar en el histórico
+                datosApp.historialCierres.unshift({
+                    fecha: tiempo.fecha,
+                    efectivo: datosApp.cierreEfectivo,
+                    nequi: datosApp.cierreNequi,
+                    total: totalHoy
+                });
+
+                // Reiniciar caja a cero
+                datosApp.cierreEfectivo = 0;
+                datosApp.cierreNequi = 0;
+                
+                guardar();
+                actualizarPantalla();
+                Swal.fire({ title: '¡Caja Cerrada!', text: 'Los datos se archivaron con éxito.', icon: 'success', background: '#1a1a1e', color: '#fff' });
+            }
+        });
+    }
+
+    function eliminarCierreHistorico(index) {
+        Swal.fire({ title: '¿Borrar este registro?', icon: 'warning', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((result) => {
+            if (result.isConfirmed) { 
+                datosApp.historialCierres.splice(index, 1); 
+                guardar(); 
+                actualizarPantalla(); 
+            }
+        });
     }
 
     function renderRecordatorios() {
@@ -380,7 +456,15 @@
         });
     }
 
-    // --- FILTRADO INTELIGENTE Y RENDER DE CLIENTES LIMITADO A 5 ---
+    // --- FUNCIÓN FILTROS: CAMBIAR TABS ---
+    function cambiarFiltroClientes(tipo) {
+        filtroClienteActual = tipo;
+        document.getElementById('filtro-todos').classList.toggle('active', tipo === 'todos');
+        document.getElementById('filtro-deudores').classList.toggle('active', tipo === 'deudores');
+        filtrarYRenderizarClientes();
+    }
+
+    // --- FILTRADO INTELIGENTE Y RENDER DE CLIENTES CON ESTADO "AL DÍA" ---
     function filtrarYRenderizarClientes() {
         const query = document.getElementById('busqueda-cliente').value.toLowerCase().trim();
         const listaC = document.getElementById('lista-fiados');
@@ -389,11 +473,17 @@
         listaC.innerHTML = '';
         contenedorVerMas.innerHTML = '';
 
-        // Filtrar según el input de búsqueda
+        // Mapear con su índice original para no perder las referencias al modificar datos
         let clientesFiltrados = datosApp.clientes.map((c, originalIndex) => ({ ...c, originalIndex }));
         
+        // 1. Filtrar por Lupa de Búsqueda
         if (query !== '') {
             clientesFiltrados = clientesFiltrados.filter(c => c.nombre.toLowerCase().includes(query));
+        }
+
+        // 2. Filtrar por Tab Rápido (Solo Deudores)
+        if (filtroClienteActual === 'deudores') {
+            clientesFiltrados = clientesFiltrados.filter(c => c.saldo > 0);
         }
 
         const totalEncontrados = clientesFiltrados.length;
@@ -403,12 +493,19 @@
             return;
         }
 
-        // Cortar la lista a un máximo de 5 si no se ha presionado "Ver todos" y no hay búsqueda activa
-        // Nota: Si hay una búsqueda activa, es mejor mostrar los resultados directos.
+        // Aplicar límite de 5 si no hay búsqueda activa y no se ha marcado expandir todo
         let limite = (mostrarTodosLosClientes || query !== '') ? totalEncontrados : 5;
         let mostrados = clientesFiltrados.slice(0, limite);
 
         mostrados.forEach((c) => {
+            // Estilo dinámico si está "Al día" o tiene deuda
+            let visualizacionSaldo = '';
+            if (c.saldo === 0) {
+                visualizacionSaldo = `<div class="item-monto" style="color: var(--success); margin-right:8px; font-size:15px; font-weight:600;">Al día</div>`;
+            } else {
+                visualizacionSaldo = `<div class="item-monto monto-deuda" style="margin-right:8px;">$${c.saldo.toLocaleString()}</div>`;
+            }
+
             listaC.innerHTML += `
                 <div class="item-row">
                     <div class="info-col">
@@ -419,16 +516,16 @@
                         <span class="item-subtext">Último movimiento: ${c.fechaUltimo}</span>
                     </div>
                     <div class="actions-row">
-                        <div class="item-monto monto-deuda" style="margin-right:8px;">$${c.saldo.toLocaleString()}</div>
+                        ${visualizacionSaldo}
                         <button class="btn-action btn-add-more" onclick="modificarSaldo(${c.originalIndex}, 'fiar')">+ Fiar</button>
-                        <button class="btn-action btn-pay" onclick="modificarSaldo(${c.originalIndex}, 'pagar')">✔</button>
+                        <button class="btn-action btn-pay" onclick="modificarSaldo(${c.originalIndex}, 'pagar')" ${c.saldo === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>✔</button>
                         <button class="btn-action btn-del" onclick="eliminarCliente(${c.originalIndex})">🗑️</button>
                     </div>
                 </div>
             `;
         });
 
-        // Si hay más de 5 y no se están mostrando todos (y no hay búsqueda filtrando), poner el botón de expansión
+        // Control del botón Expandir / Contraer lista (solo si no hay búsqueda activa)
         if (totalEncontrados > 5 && !mostrarTodosLosClientes && query === '') {
             contenedorVerMas.innerHTML = `
                 <button class="btn-ver-mas" onclick="conmutarVerTodos()">👁️ Ver todos los clientes (${totalEncontrados})</button>
@@ -445,21 +542,44 @@
         filtrarYRenderizarClientes();
     }
 
-    // Adaptador por si se llama desde el HTML viejo
     function editedName(idx) { editarNombre(idx); }
 
     function actualizarPantalla() {
+        // Totales de Caja Principal
         const totalGen = datosApp.cierreEfectivo + datosApp.cierreNequi;
         document.getElementById('caja-efectivo').innerText = `$${datosApp.cierreEfectivo.toLocaleString()}`;
         document.getElementById('caja-nequi').innerText = `$${datosApp.cierreNequi.toLocaleString()}`;
         document.getElementById('caja-total').innerText = `$${totalGen.toLocaleString()}`;
         
+        // Resumen de Deudores Arriba
         let totalFiadoAcumulado = 0; let cantPersonasDeben = 0;
         datosApp.clientes.forEach(c => { if(c.saldo > 0) { totalFiadoAcumulado += c.saldo; cantPersonasDeben++; } });
         document.getElementById('resumen-fiados').innerText = `${cantPersonasDeben} deben total: $${totalFiadoAcumulado.toLocaleString()}`;
 
-        // Renderizar los clientes usando la función controlada
+        // Renderizar sección clientes
         filtrarYRenderizarClientes();
+
+        // Renderizar Historial de Cierres Diarios
+        const listaCierres = document.getElementById('lista-cierres-historicos');
+        if(!datosApp.historialCierres) datosApp.historialCierres = [];
+        
+        listaCierres.innerHTML = datosApp.historialCierres.length === 0 ? 
+            `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">No hay cierres archivados.</div>` : '';
+        
+        datosApp.historialCierres.forEach((h, index) => {
+            listaCierres.innerHTML += `
+                <div class="item-row" style="padding:10px 15px; background: rgba(255,255,255,0.02);">
+                    <div class="info-col">
+                        <span style="font-weight:600; font-size:14px; color:#fff;">📅 Día: ${h.fecha}</span>
+                        <span style="font-size:11px; color:var(--text-muted);">💵 Efec: $${h.efectivo.toLocaleString()} | 📱 Nequi: $${h.nequi.toLocaleString()}</span>
+                    </div>
+                    <div class="actions-row">
+                        <span style="font-size:15px; font-weight:700; color:var(--success); margin-right:10px;">$${h.total.toLocaleString()}</span>
+                        <button class="btn-action btn-del" style="padding:4px 8px; font-size:11px;" onclick="eliminarCierreHistorico(${index})">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
 
         // Proveedores
         const listaP = document.getElementById('lista-proveedores');
@@ -484,6 +604,7 @@
         });
     }
 
+    // Encendido Inicial
     renderRecordatorios();
     actualizarPantalla();
 </script>
