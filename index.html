@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Libreta Digital Inteligente - Marcos Fuentes</title>
+    <title>Libreta Digital Inteligente - Gestión de Negocio</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -18,9 +18,10 @@
             --warning: #f59e0b;
             --danger: #ef4444;
             --border: #2d2d34;
+            --val-nequi-color: #818cf8;
         }
 
-        /* Estilos para el Modo Claro */
+        /* Estilos optimizados para el Modo Claro */
         body.light-mode {
             --bg-primary: #f4f4f5;
             --bg-surface: #ffffff;
@@ -32,6 +33,7 @@
             --warning: #d97706;
             --danger: #dc2626;
             --border: #e4e4e7;
+            --val-nequi-color: #4338ca; /* Morado oscuro para contraste en fondo blanco */
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
@@ -42,10 +44,7 @@
         header h1 { font-size: 20px; font-weight: 700; color: var(--text-main); text-align: center; }
         header p { font-size: 13px; color: var(--text-muted); text-align: center; }
 
-        /* Botón de Modo Claro/Oscuro (Luna 🌙) */
         .theme-toggle { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 22px; background: none; border: none; cursor: pointer; padding: 5px; z-index: 10; }
-
-        /* Botón de Menú de 3 Líneas ☰ */
         .menu-hamburger { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 26px; background: none; border: none; color: var(--text-main); cursor: pointer; padding: 5px; z-index: 10; }
 
         /* Panel Lateral (Sidebar Desplegable) */
@@ -88,9 +87,9 @@
         .metodo-item { font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
         .metodo-item span:first-child { color: var(--text-muted); font-size: 11px; }
         .metodo-item .val-efec { color: var(--text-main); font-weight: 600; }
-        .metodo-item .val-nequi { color: #818cf8; font-weight: 600; }
+        .metodo-item .val-nequi { color: var(--val-nequi-color); font-weight: 600; }
 
-        .btn-close-day { width: 100%; background: rgba(245, 158, 11, 0.12); border: 1px dashed var(--warning); color: var(--warning); padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-close-day { width: 100%; background: rgba(245, 158, 11, 0.12); border: 1px dashed var(--warning); color: var(--warning); padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
 
         .cierre-input { width: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: var(--text-main); font-size: 15px; margin-bottom: 12px; outline: none; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -148,7 +147,7 @@
             <button onclick="nuevoArticulo()" style="width:100%; background:var(--accent); border:none; color:#fff; padding:10px; font-weight:600; border-radius:10px; cursor:pointer; margin-bottom:15px;">+ Registrar Nuevo Artículo</button>
             <div class="search-container">
                 <span class="search-icon">🔍</span>
-                <input type="text" id="busqueda-articulo" class="search-input" placeholder="Buscar artículo por nombre/gramaje..." oninput="renderizarArticulos()">
+                <input type="text" id="busqueda-articulo" class="search-input" placeholder="Buscar artículo por nombre..." oninput="renderizarArticulos()">
             </div>
             <div class="articulos-list" id="lista-articulos"></div>
         </div>
@@ -203,7 +202,7 @@
             <button class="btn-close-day" onclick="ejecutarCierreDeCaja()">🔒 Cerrar Caja de Hoy y Reiniciar</button>
         </div>
         
-        <input type="text" inputmode="numeric" pattern="[0-9]*" id="cierre-monto-input" class="cierre-input" placeholder="0">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="cierre-monto-input" class="cierre-input" placeholder="Digite el monto sin puntos">
         
         <div class="btn-grid">
             <button class="btn-quick in-efec" onclick="registrarMovimiento('ingreso', 'efectivo')">➕ Venta Efectivo</button>
@@ -263,18 +262,30 @@
 
     if (localStorage.getItem('libreta_inteligente_v8')) {
         datosApp = JSON.parse(localStorage.getItem('libreta_inteligente_v8'));
-    } else if (localStorage.getItem('libreta_inteligente_v7')) {
-        const viejaData = JSON.parse(localStorage.getItem('libreta_inteligente_v7'));
-        datosApp = { ...datosApp, ...viejaData };
     }
 
     function guardar() {
         localStorage.setItem('libreta_inteligente_v8', JSON.stringify(datosApp));
     }
 
-    // Formateador Colombiano Estricto (Formato: $2.000 sin decimales)
+    // Formateador Colombiano Estricto ($2.000)
     function formataMoneda(valor) {
-        return '$' + Math.round(valor).toLocaleString('es-CO');
+        return '$' + Math.round(valor || 0).toLocaleString('es-CO');
+    }
+
+    // Máscara para formatear en tiempo real los inputs numéricos dentro de SweetAlert2
+    function limpiarYFormatearInput(inputElement) {
+        let val = inputElement.value.replace(/\D/g, "");
+        if(val !== "") {
+            inputElement.value = parseInt(val, 10).toLocaleString('es-CO');
+        } else {
+            inputElement.value = "";
+        }
+    }
+
+    function procesarMontoFormateado(texto) {
+        if(!texto) return 0;
+        return parseFloat(texto.replace(/\./g, "")) || 0;
     }
 
     function conmutarTema() {
@@ -302,7 +313,7 @@
         const d = new Date();
         const fecha = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
         let minutos = d.getMinutes();
-        if (minutos < 10) minutos = '0' + minutes;
+        if (minutos < 10) minutos = '0' + minutos;
         return { fecha, completa: `${fecha} a las ${d.getHours()}:${minutos}` };
     }
 
@@ -321,9 +332,17 @@
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = (event) => {
-                datosApp = JSON.parse(event.target.result);
-                if(!datosApp.articulos) datosApp.articulos = [];
-                guardar(); aplicarTemaVisual(); actualizarPantalla(); renderRecordatorios();
+                try {
+                    const parsed = JSON.parse(event.target.result);
+                    if(parsed && typeof parsed === 'object') {
+                        datosApp = parsed;
+                        if(!datosApp.articulos) datosApp.articulos = [];
+                        guardar(); aplicarTemaVisual(); actualizarPantalla(); renderRecordatorios();
+                        Swal.fire({ title: 'Éxito', text: 'Datos cargados correctamente', icon: 'success', background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
+                    }
+                } catch(err) {
+                    Swal.fire({ title: 'Error', text: 'Archivo de respaldo inválido', icon: 'error', background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
+                }
             };
             reader.readAsText(file);
         };
@@ -346,13 +365,21 @@
         }
 
         Swal.fire({
-            title: '¿Cerrar caja del día?',
-            text: `Se archivará un total de ${formataMoneda(totalHoy)}.`,
+            title: '¿Confirmar Cierre Total?',
+            text: `Se archivará un total de ${formataMoneda(totalHoy)}. Escriba la palabra "CERRAR" para confirmar:`,
+            input: 'text',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Sí, cerrar',
+            confirmButtonText: 'Sí, archivar y reiniciar',
             cancelButtonText: 'Cancelar',
-            background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff'
+            background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
+            preConfirm: (value) => {
+                if (value !== 'CERRAR') {
+                    Swal.showValidationMessage('Debe escribir exactamente "CERRAR"');
+                    return false;
+                }
+                return true;
+            }
         }).then((result) => {
             if (result.isConfirmed) {
                 const tiempo = obtenerFechaHoraActual();
@@ -376,16 +403,16 @@
             background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
             html: `
                 <input id="art-nombre" class="swal2-input" placeholder="Nombre y Medida (Ej: Arroz Roa 1lb)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
-                <input id="art-costo" type="text" inputmode="numeric" pattern="[0-9]*" class="swal2-input" placeholder="Precio de Costo ($)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
-                <input id="art-venta" type="text" inputmode="numeric" pattern="[0-9]*" class="swal2-input" placeholder="Precio de Venta ($)" style="background:var(--bg-card); color:var(--text-main);">
+                <input id="art-costo" type="text" class="swal2-input" placeholder="Precio de Costo ($)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
+                <input id="art-venta" type="text" class="swal2-input" placeholder="Precio de Venta ($)" style="background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
             `,
             showCancelButton: true,
             confirmButtonText: 'Guardar',
             cancelButtonText: 'Cancelar',
             preConfirm: () => {
                 const nombre = document.getElementById('art-nombre').value.trim();
-                const costo = parseFloat(document.getElementById('art-costo').value) || 0;
-                const venta = parseFloat(document.getElementById('art-venta').value) || 0;
+                const costo = procesarMontoFormateado(document.getElementById('art-costo').value);
+                const venta = procesarMontoFormateado(document.getElementById('art-venta').value);
                 if(!nombre || venta <= 0) { Swal.showValidationMessage('El nombre y precio de venta son obligatorios'); return false; }
                 return { nombre, costo, venta, faltante: false };
             }
@@ -504,14 +531,14 @@
             background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
             html: `
                 <input id="prov-nombre" class="swal2-input" placeholder="Nombre" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
-                <input id="prov-monto" type="text" inputmode="numeric" pattern="[0-9]*" class="swal2-input" placeholder="Monto ($)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
+                <input id="prov-monto" type="text" class="swal2-input" placeholder="Monto ($)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
                 <input id="prov-fecha" type="date" class="swal2-input" style="background:var(--bg-card); color:var(--text-main);">
             `,
             showCancelButton: true,
             confirmButtonText: 'Guardar',
             preConfirm: () => {
                 const nombre = document.getElementById('prov-nombre').value.trim();
-                const monto = parseFloat(document.getElementById('prov-monto').value) || 0;
+                const monto = procesarMontoFormateado(document.getElementById('prov-monto').value);
                 const fecha = document.getElementById('prov-fecha').value;
                 if(!nombre) return false;
                 return { nombre, monto, fecha };
@@ -546,11 +573,14 @@
         Swal.fire({
             title: 'Agregar Fiador',
             background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
-            html: `<input id="cli-nombre" class="swal2-input" placeholder="Nombre" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);"><input id="cli-inicial" type="text" inputmode="numeric" pattern="[0-9]*" class="swal2-input" placeholder="Monto inicial ($ opcional)" style="background:var(--bg-card); color:var(--text-main);">`,
+            html: `
+                <input id="cli-nombre" class="swal2-input" placeholder="Nombre" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
+                <input id="cli-inicial" type="text" class="swal2-input" placeholder="Monto inicial ($ opcional)" style="background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
+            `,
             showCancelButton: true,
             preConfirm: () => {
                 const nombre = document.getElementById('cli-nombre').value.trim();
-                const inicial = parseFloat(document.getElementById('cli-inicial').value) || 0;
+                const inicial = procesarMontoFormateado(document.getElementById('cli-inicial').value);
                 if(!nombre) return false;
                 return { nombre, saldo: inicial };
             }
@@ -566,11 +596,34 @@
 
     function modificarSaldo(index, accion) {
         const c = datosApp.clientes[index];
-        Swal.fire({ title: accion === 'fiar' ? `Fiar a ${c.nombre}` : `Abonar de ${c.nombre}`, input: 'text', inputAttributes: { inputmode: 'numeric', pattern: '[0-9]*' }, showCancelButton: true, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' }).then((res) => {
-            const valor = parseFloat(res.value);
-            if (res.isConfirmed && valor > 0) {
-                c.saldo += (accion === 'fiar' ? valor : -valor); if (c.saldo < 0) c.saldo = 0;
-                const tiempo = obtenerFechaHoraActual(); c.fechaUltimo = tiempo.fecha;
+        Swal.fire({ 
+            title: accion === 'fiar' ? `Fiar a ${c.nombre}` : `Abonar de ${c.nombre}`, 
+            input: 'text',
+            inputPlaceholder: 'Digite el monto',
+            showCancelButton: true, 
+            background: datosApp.temaClaro ? '#fff' : '#1a1a1e', 
+            color: datosApp.temaClaro ? '#000' : '#fff',
+            didOpen: () => {
+                const input = Swal.getInput();
+                input.oninput = () => { limpiarYFormatearInput(input); };
+            },
+            preConfirm: (inputValue) => {
+                const valor = procesarMontoFormateado(inputValue);
+                if (isNaN(valor) || valor <= 0) {
+                    Swal.showValidationMessage('Debe ingresar un monto válido mayor a 0');
+                    return false;
+                }
+                return valor;
+            }
+        }).then((res) => {
+            if (res.isConfirmed) {
+                const valor = res.value;
+                let nuevoSaldo = c.saldo + (accion === 'fiar' ? valor : -valor); 
+                if (nuevoSaldo < 0) nuevoSaldo = 0;
+                
+                c.saldo = nuevoSaldo;
+                const tiempo = obtenerFechaHoraActual(); 
+                c.fechaUltimo = tiempo.fecha;
                 if(!c.historial) c.historial = [];
                 c.historial.push({ tipo: accion === 'fiar' ? 'fiado' : 'abono', monto: valor, fechaHora: tiempo.completa });
                 guardar(); actualizarPantalla();
@@ -581,7 +634,7 @@
     function editarNombre(index) {
         let c = datosApp.clientes[index]; if (c.cambiosNombre >= 2) return;
         Swal.fire({ title: 'Editar Nombre', input: 'text', inputValue: c.nombre, showCancelButton: true, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' }).then((res) => {
-            if (res.isConfirmed && res.value) { c.nombre = res.value; c.cambiosNombre += 1; guardar(); actualizarPantalla(); }
+            if (res.isConfirmed && res.value) { c.nombre = res.value.trim(); c.cambiosNombre += 1; guardar(); actualizarPantalla(); }
         });
     }
 
