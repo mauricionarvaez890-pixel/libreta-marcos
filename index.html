@@ -39,25 +39,29 @@
         .alert-btn { background: var(--warning); color: #000; border: none; padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; align-self: flex-start; }
 
         .section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+        .sub-resumen { font-size: 12px; font-weight: 400; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 20px; }
         
         .card { background: var(--bg-surface); border-radius: 16px; padding: 20px; border: 1px solid #2d2d34; margin-bottom: 25px; }
         
-        /* Cierre Display con Desglose */
-        .cierre-display { background: var(--bg-card); border-radius: 12px; margin-bottom: 15px; border: 1px solid #3a3a44; overflow: hidden; }
-        .cierre-row { display: flex; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #3a3a44; font-size: 14px; }
-        .cierre-row.total-general { background: rgba(255,255,255,0.03); border-bottom: none; font-weight: 700; font-size: 16px; padding: 12px 15px; }
-        .val-efectivo { color: #fff; font-weight: 600; }
-        .val-nequi { color: #818cf8; font-weight: 600; }
-        .val-total { color: var(--success); }
+        /* DISEÑO DE CAJA ORIGINAL CON ESTILO MEJORADO */
+        .cierre-display-grande { background: var(--bg-card); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; border: 1px solid #3a3a44; }
+        .cierre-display-grande .titulo-central { font-size: 15px; color: var(--text-muted); font-weight: 500; margin-bottom: 5px; }
+        .cierre-display-grande .monto-central { font-size: 36px; font-weight: 700; color: var(--success); margin-bottom: 15px; }
+        
+        .desglose-metodos { display: flex; justify-content: space-around; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; }
+        .metodo-item { font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
+        .metodo-item span:first-child { color: var(--text-muted); font-size: 11px; }
+        .metodo-item .val-efec { color: #fff; font-weight: 600; }
+        .metodo-item .val-neq { color: #818cf8; font-weight: 600; }
 
-        /* Botonera Rápida */
-        .input-box { margin-bottom: 15px; }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        /* Input y Botonera Rápida */
+        .cierre-input { width: 100%; background: var(--bg-card); border: 1px solid #3a3a44; border-radius: 8px; padding: 12px; color: #fff; font-size: 15px; margin-bottom: 12px; outline: none; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-quick { border: none; padding: 12px; font-size: 13px; font-weight: 600; border-radius: 10px; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .btn-quick.in-efec { background: #15803d; } /* Verde oscuro */
-        .btn-quick.in-neq { background: #4338ca; }  /* Morado/Azul Nequi */
-        .btn-quick.out-efec { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); color: var(--danger); }
-        .btn-quick.out-neq { background: rgba(168, 85, 247, 0.2); border: 1px solid #a855f7; color: #c084fc; }
+        .btn-quick.in-efec { background: #15803d; }
+        .btn-quick.in-neq { background: #4338ca; }
+        .btn-quick.out-efec { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); }
+        .btn-quick.out-neq { background: rgba(168, 85, 247, 0.15); border: 1px solid #a855f7; color: #c084fc; }
 
         .fiados-list, .proveedores-list { display: flex; flex-direction: column; gap: 12px; }
         .item-row { background: var(--bg-card); padding: 15px; border-radius: 12px; border: 1px solid #3a3a44; display: flex; justify-content: space-between; align-items: center; }
@@ -65,6 +69,7 @@
         .info-col { display: flex; flex-direction: column; gap: 2px; }
         .name-row { display: flex; align-items: center; gap: 8px; }
         .item-name { font-weight: 600; font-size: 15px; }
+        .item-subtext { font-size: 11px; color: var(--text-muted); }
         .edit-badge { font-size: 10px; background: #444; color: #ccc; padding: 2px 6px; border-radius: 20px; cursor: pointer; }
         
         .item-monto { font-size: 18px; font-weight: 700; }
@@ -75,7 +80,6 @@
         .btn-pay { background: rgba(16, 185, 129, 0.15); color: var(--success); }
         .btn-add-more { background: rgba(37, 99, 235, 0.15); color: var(--accent); }
         .btn-del { background: rgba(239, 68, 116, 0.15); color: var(--danger); font-size: 14px; }
-        .btn-alert-prov { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
     </style>
 </head>
 <body>
@@ -91,41 +95,41 @@
         <button class="btn-backup import" onclick="importarDatos()">📂 Restaurar Copia</button>
     </div>
 
+    <!-- Contenedor de Alertas de Proveedores automáticas -->
     <div id="contenedor-recordatorios"></div>
 
-    <!-- SECCIÓN 1: CIERRE DE CAJA MEJORADO -->
-    <div class="section-title">📊 Caja y Métodos de Pago</div>
+    <!-- SECCIÓN 1: CIERRE DE CAJA FORMATO GRANDE ORIGINAL -->
+    <div class="section-title">📊 Cierre de Caja Diario</div>
     <div class="card">
-        <div class="cierre-display">
-            <div class="cierre-row">
-                <span>💵 En Efectivo:</span>
-                <span class="val-efectivo" id="caja-efectivo">$0</span>
-            </div>
-            <div class="cierre-row">
-                <span>📱 En Nequi:</span>
-                <span class="val-nequi" id="caja-nequi">$0</span>
-            </div>
-            <div class="cierre-row total-general">
-                <span>📈 Total del Día:</span>
-                <span class="val-total" id="caja-total">$0</span>
+        <div class="cierre-display-grande">
+            <div class="titulo-central">Total Acumulado Hoy</div>
+            <div class="monto-central" id="caja-total">$0</div>
+            
+            <div class="desglose-metodos">
+                <div class="metodo-item">
+                    <span>💵 En Efectivo</span>
+                    <span class="val-efec" id="caja-efectivo">$0</span>
+                </div>
+                <div class="metodo-item">
+                    <span>📱 En Nequi</span>
+                    <span class="val-nequi" id="caja-nequi">$0</span>
+                </div>
             </div>
         </div>
         
-        <div class="input-box">
-            <input type="number" id="cierre-monto-input" placeholder="Monto del movimiento ($)">
-            
-            <div class="btn-grid">
-                <button class="btn-quick in-efec" onclick="registrarMovimiento('ingreso', 'efectivo')">➕ Venta Efectivo</button>
-                <button class="btn-quick in-neq" onclick="registrarMovimiento('ingreso', 'nequi')">➕ Venta Nequi</button>
-                <button class="btn-quick out-efec" onclick="registrarMovimiento('egreso', 'efectivo')">➖ Gasto Efectivo</button>
-                <button class="btn-quick out-neq" onclick="registrarMovimiento('egreso', 'nequi')">➖ Gasto Nequi</button>
-            </div>
+        <input type="number" id="cierre-monto-input" class="cierre-input" placeholder="0">
+        
+        <div class="btn-grid">
+            <button class="btn-quick in-efec" onclick="registrarMovimiento('ingreso', 'efectivo')">➕ Venta Efectivo</button>
+            <button class="btn-quick in-neq" onclick="registrarMovimiento('ingreso', 'nequi')">➕ Venta Nequi</button>
+            <button class="btn-quick out-efec" onclick="registrarMovimiento('egreso', 'efectivo')">➖ Gasto Efectivo</button>
+            <button class="btn-quick out-neq" onclick="registrarMovimiento('egreso', 'nequi')">➖ Gasto Nequi</button>
         </div>
     </div>
 
     <!-- SECCIÓN 2: CONTROL DE FIADOS -->
     <div class="section-title">
-        <span>👥 Personas que Deben</span>
+        <span>👥 Personas que Deben <span id="resumen-fiados" class="sub-resumen">$0</span></span>
         <button onclick="nuevoCliente()" style="background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer; font-size:14px;">+ Nuevo Cliente</button>
     </div>
     <div class="card">
@@ -135,7 +139,7 @@
     <!-- SECCIÓN 3: ESTADO DE PROVEEDORES -->
     <div class="section-title">
         <span>🚚 Estado de Proveedores</span>
-        <button onclick="nuevoProveedor()" style="background:none; border:none; color:var(--warning); font-weight:600; cursor:pointer; font-size:14px;">+ Nuevo Proveedor</button>
+        <button onclick="nuevoProveedorFlujoRapido()" style="background:none; border:none; color:var(--warning); font-weight:600; cursor:pointer; font-size:14px;">+ Nuevo Proveedor</button>
     </div>
     <div class="card">
         <div class="proveedores-list" id="lista-proveedores"></div>
@@ -143,7 +147,6 @@
 </div>
 
 <script>
-    // Corrección estructural para mantener saldos independientes
     let datosApp = {
         cierreEfectivo: 0,
         cierreNequi: 0,
@@ -152,21 +155,18 @@
         recordatorios: []
     };
 
-    // Migración automática de versiones viejas si existieran
-    if (localStorage.getItem('libreta_inteligente_v4')) {
-        const viejo = JSON.parse(localStorage.getItem('libreta_inteligente_v4'));
-        datosApp.clientes = viejo.clientes || [];
-        datosApp.proveedores = viejo.proveedores || [];
-        datosApp.recordatorios = viejo.recordatorios || [];
-        datosApp.cierreEfectivo = viejo.cierreDiario || 0; // Migrar total viejo a efectivo por defecto
-        localStorage.removeItem('libreta_inteligente_v4');
-        guardar();
-    } else if (localStorage.getItem('libreta_inteligente_v5')) {
+    if (localStorage.getItem('libreta_inteligente_v5')) {
         datosApp = JSON.parse(localStorage.getItem('libreta_inteligente_v5'));
     }
 
     function guardar() {
         localStorage.setItem('libreta_inteligente_v5', JSON.stringify(datosApp));
+    }
+
+    // --- FECHA ACTUAL AUTOMÁTICA EN FORMATO CORTO ---
+    function obtenerFechaActual() {
+        const d = new Date();
+        return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
     }
 
     // --- RESPALDOS ---
@@ -186,10 +186,9 @@
     function importarDatos() {
         Swal.fire({
             title: '¿Restaurar copia?',
-            text: "Se reemplazarán los datos de la pantalla.",
+            text: "Se reemplazarán los datos actuales.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Sí, restaurar',
             background: '#1a1a1e', color: '#fff'
         }).then((result) => {
             if (result.isConfirmed) {
@@ -208,7 +207,7 @@
                             renderRecordatorios();
                             Swal.fire({ icon: 'success', title: 'Restaurado', background: '#1a1a1e', color: '#fff' });
                         } catch (error) {
-                            Swal.fire({ icon: 'error', title: 'Error en archivo', background: '#1a1a1e', color: '#fff' });
+                            Swal.fire({ icon: 'error', title: 'Archivo inválido', background: '#1a1a1e', color: '#fff' });
                         }
                     };
                     reader.readAsText(file);
@@ -218,13 +217,13 @@
         });
     }
 
-    // --- NUEVA BOTONERA RAPIDA DE MOVIMIENTOS ---
+    // --- CONTROL DE CAJA DIARIA ---
     function registrarMovimiento(tipo, metodo) {
         const montoInput = document.getElementById('cierre-monto-input');
         const monto = parseFloat(montoInput.value);
 
-        if (!monto || monto <= 0) {
-            Swal.fire({ icon: 'error', title: 'Monto inválido', background: '#1a1a1e', color: '#fff' });
+        if (isNaN(monto) || monto <= 0) {
+            Swal.fire({ icon: 'error', title: 'Escribe un monto válido', background: '#1a1a1e', color: '#fff' });
             return;
         }
 
@@ -241,16 +240,18 @@
         actualizarPantalla();
     }
 
-    // --- RECORDATORIOS PROVEEDORES ---
+    // --- RECORDATORIOS DE ALERTAS SUPERIORES ---
     function renderRecordatorios() {
         const contenedor = document.getElementById('contenedor-recordatorios');
         contenedor.innerHTML = '';
+        if(!datosApp.recordatorios) datosApp.recordatorios = [];
+        
         datosApp.recordatorios.forEach((rec, index) => {
             contenedor.innerHTML += `
                 <div class="alert-box">
                     <div class="alert-title">🔔 RECORDATORIO ENLAZADO: ${rec.proveedor.toUpperCase()}</div>
                     <div class="alert-text">
-                        Pasa el <span style="color:var(--warning);">${rec.dia}</span>. 
+                        Paga el <span style="color:var(--warning);">${rec.dia}</span>. 
                         <span style="display:block; font-size:22px; color:#fff; margin-top:5px;">Valor: $${rec.valor.toLocaleString()}</span>
                     </div>
                     <button class="alert-btn" onclick="eliminarRecordatorio(${index})">✔ Confirmar y Quitar Aviso</button>
@@ -259,38 +260,80 @@
         });
     }
 
-    function crearRecordatorioId(provIndex) {
-        const prov = datosApp.proveedores[provIndex];
-        Swal.fire({
-            title: `Recordatorio: ${prov.nombre}`,
-            background: '#1a1a1e', color: '#fff',
-            html: `
-                <input id="rec-dia" class="swal2-input" placeholder="Ej: Martes" style="margin-bottom:10px; background:#26262b; color:#fff;">
-                <input id="rec-valor" type="number" class="swal2-input" placeholder="Monto ($)" style="background:#26262b; color:#fff;">
-            `,
-            showCancelButton: true,
-            confirmButtonText: 'Crear Alerta',
-            preConfirm: () => {
-                return { dia: document.getElementById('rec-dia').value, valor: parseFloat(document.getElementById('rec-valor').value) };
-            }
-        }).then((result) => {
-            if (result.isConfirmed && result.value.dia && result.value.valor) {
-                datosApp.recordatorios.push({ proveedor: prov.nombre, dia: result.value.dia, valor: result.value.valor });
-                guardar(); renderRecordatorios();
-            }
-        });
-    }
-
     function eliminarRecordatorio(index) {
         datosApp.recordatorios.splice(index, 1);
         guardar(); renderRecordatorios();
     }
 
-    // --- FIADOS ---
+    // --- FLUJO RÁPIDO PARA PROVEEDORES (AHORRO DE TIEMPO) ---
+    function nuevoProveedorFlujoRapido() {
+        Swal.fire({
+            title: 'Nuevo Proveedor',
+            background: '#1a1a1e', color: '#fff',
+            html: `
+                <input id="prov-nombre" class="swal2-input" placeholder="Nombre (Ej: Postobón)" style="margin-bottom:12px; background:#26262b; color:#fff;">
+                <input id="prov-monto" type="number" class="swal2-input" placeholder="Monto a cancelar ($)" style="margin-bottom:12px; background:#26262b; color:#fff;">
+                <label style="font-size:12px; color:var(--text-muted); display:block; text-align:left; margin-left:25px;">Fecha de entrega / pago:</label>
+                <input id="prov-fecha" type="date" class="swal2-input" style="background:#26262b; color:#fff; padding:10px;">
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Guardar Proveedor',
+            preConfirm: () => {
+                const nombre = document.getElementById('prov-nombre').value.trim();
+                const monto = parseFloat(document.getElementById('prov-monto').value);
+                const fecha = document.getElementById('prov-fecha').value;
+                if(!nombre) { Swal.showValidationMessage('El nombre es obligatorio'); return false; }
+                return { nombre, monto: isNaN(monto) ? 0 : monto, fecha: fecha || 'Sin fecha' };
+            }
+        }).then((res) => {
+            if (res.isConfirmed) {
+                const p = res.value;
+                // Guardar en la lista
+                datosApp.proveedores.push({ nombre: p.nombre, saldoPendiente: p.monto, fechaEntrega: p.fecha });
+                
+                // Si tiene monto, activar alerta automáticamente en la parte superior
+                if(p.monto > 0) {
+                    if(!datosApp.recordatorios) datosApp.recordatorios = [];
+                    // Convertir formato de fecha YYYY-MM-DD a DD/MM/YYYY para visualización limpia
+                    let fechaFormateada = p.fecha;
+                    if(p.fecha !== 'Sin fecha') {
+                        const partes = p.fecha.split('-');
+                        fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                    }
+                    datosApp.recordatorios.push({ proveedor: p.nombre, dia: fechaFormateada, valor: p.monto });
+                }
+                
+                guardar(); actualizarPantalla(); renderRecordatorios();
+            }
+        });
+    }
+
+    // --- CONTROL DE FIADOS AUTOMATIZADO ---
     function nuevoCliente() {
-        Swal.fire({ title: 'Nuevo Cliente', input: 'text', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((res) => {
-            if (res.isConfirmed && res.value) {
-                datosApp.clientes.push({ nombre: res.value, saldo: 0, cambiosNombre: 0 });
+        Swal.fire({
+            title: 'Agregar Fiador',
+            background: '#1a1a1e', color: '#fff',
+            html: `
+                <input id="cli-nombre" class="swal2-input" placeholder="Nombre del cliente" style="margin-bottom:12px; background:#26262b; color:#fff;">
+                <input id="cli-inicial" type="number" class="swal2-input" placeholder="Monto inicial fiado ($ opcional)" style="background:#26262b; color:#fff;">
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Registrar',
+            preConfirm: () => {
+                const nombre = document.getElementById('cli-nombre').value.trim();
+                const inicial = parseFloat(document.getElementById('cli-inicial').value);
+                if(!nombre) { Swal.showValidationMessage('El nombre es obligatorio'); return false; }
+                return { nombre, saldo: isNaN(inicial) ? 0 : inicial };
+            }
+        }).then((res) => {
+            if (res.isConfirmed) {
+                const fechaHoy = obtenerFechaActual();
+                datosApp.clientes.push({ 
+                    nombre: res.value.nombre, 
+                    saldo: res.value.saldo, 
+                    fechaUltimo: fechaHoy,
+                    cambiosNombre: 0 
+                });
                 guardar(); actualizarPantalla();
             }
         });
@@ -309,10 +352,21 @@
 
     function modificarSaldo(index, accion) {
         const c = datosApp.clientes[index];
-        Swal.fire({ title: accion === 'fiar' ? `Fiar a ${c.nombre}` : `Abonar de ${c.nombre}`, input: 'number', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((res) => {
+        Swal.fire({ 
+            title: accion === 'fiar' ? `Fiar a ${c.nombre}` : `Abonar de ${c.nombre}`, 
+            input: 'number', 
+            showCancelButton: true, 
+            background: '#1a1a1e', 
+            color: '#fff' 
+        }).then((res) => {
             if (res.isConfirmed && parseFloat(res.value) > 0) {
-                c.saldo += (accion === 'fiar' ? parseFloat(res.value) : -parseFloat(res.value));
+                const valor = parseFloat(res.value);
+                c.saldo += (accion === 'fiar' ? valor : -valor);
                 if (c.saldo < 0) c.saldo = 0;
+                
+                // Actualización automática de fecha en base de datos al realizar movimiento
+                c.fechaUltimo = obtenerFechaActual();
+                
                 guardar(); actualizarPantalla();
             }
         });
@@ -327,26 +381,6 @@
         });
     }
 
-    // --- PROVEEDORES ---
-    function nuevoProveedor() {
-        Swal.fire({ title: 'Nuevo Proveedor', input: 'text', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((res) => {
-            if (res.isConfirmed && res.value) {
-                datosApp.proveedores.push({ nombre: res.value, saldoPendiente: 0 });
-                guardar(); actualizarPantalla();
-            }
-        });
-    }
-
-    function modificarSaldoProveedor(index) {
-        const p = datosApp.proveedores[index];
-        Swal.fire({ title: `Factura de ${p.nombre}`, input: 'number', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((res) => {
-            if (res.isConfirmed) {
-                p.saldoPendiente = parseFloat(res.value) || 0;
-                guardar(); actualizarPantalla();
-            }
-        });
-    }
-
     function eliminarProveedor(index) {
         Swal.fire({ title: '¿Eliminar proveedor?', icon: 'warning', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((result) => {
             if (result.isConfirmed) {
@@ -356,7 +390,7 @@
         });
     }
 
-    // --- RENDERIZADO GENERAL ---
+    // --- RENDERIZADO GENERAL ACTUALIZADO ---
     function actualizarPantalla() {
         // Render de montos independientes de caja
         const totalGen = datosApp.cierreEfectivo + datosApp.cierreNequi;
@@ -364,9 +398,20 @@
         document.getElementById('caja-nequi').innerText = `$${datosApp.cierreNequi.toLocaleString()}`;
         document.getElementById('caja-total').innerText = `$${totalGen.toLocaleString()}`;
         
-        // Clientes
+        // Calcular Resumen de Fiados totales
+        let totalFiadoAcumulado = 0;
+        let cantPersonasDeben = 0;
+        datosApp.clientes.forEach(c => {
+            if(c.saldo > 0) {
+                totalFiadoAcumulado += c.saldo;
+                cantPersonasDeben++;
+            }
+        });
+        document.getElementById('resumen-fiados').innerText = `${cantPersonasDeben} deben total: $${totalFiadoAcumulado.toLocaleString()}`;
+
+        // Clientes con fechas guardadas
         const listaC = document.getElementById('lista-fiados');
-        listaC.innerHTML = datosApp.clientes.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">Sin clientes.</div>` : '';
+        listaC.innerHTML = datosApp.clientes.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">Sin clientes registrados.</div>` : '';
         datosApp.clientes.forEach((c, index) => {
             listaC.innerHTML += `
                 <div class="item-row">
@@ -375,6 +420,7 @@
                             <span class="item-name">${c.nombre}</span>
                             ${c.cambiosNombre < 2 ? `<span class="edit-badge" onclick="editarNombre(${index})">📝</span>` : ''}
                         </div>
+                        <span class="item-subtext">Último movimiento: ${c.fechaUltimo || obtenerFechaActual()}</span>
                     </div>
                     <div class="actions-row">
                         <div class="item-monto monto-deuda" style="margin-right:8px;">$${c.saldo.toLocaleString()}</div>
@@ -388,16 +434,20 @@
 
         // Proveedores
         const listaP = document.getElementById('lista-proveedores');
-        listaP.innerHTML = datosApp.proveedores.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">Sin proveedores.</div>` : '';
+        listaP.innerHTML = datosApp.proveedores.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">Sin proveedores registrados.</div>` : '';
         datosApp.proveedores.forEach((p, index) => {
+            let fechaMostrar = p.fechaEntrega || 'Sin fecha';
+            if(p.fechaEntrega && p.fechaEntrega.includes('-')) {
+                const partes = p.fechaEntrega.split('-');
+                fechaMostrar = `${partes[2]}/${partes[1]}/${partes[0]}`;
+            }
             listaP.innerHTML += `
                 <div class="item-row">
                     <div class="info-col">
-                        <span class="item-name" onclick="modificarSaldoProveedor(${index})" style="cursor:pointer; text-decoration:underline;">${p.nombre} 📝</span>
-                        <span style="font-size:12px; color:var(--text-muted);">Deuda: $${p.saldoPendiente.toLocaleString()}</span>
+                        <span class="item-name" style="font-weight:600;">${p.nombre}</span>
+                        <span style="font-size:12px; color:var(--text-muted);">Deuda: $${p.saldoPendiente.toLocaleString()} • Entrega: ${fechaMostrar}</span>
                     </div>
                     <div class="actions-row">
-                        <button class="btn-action btn-alert-prov" onclick="crearRecordatorioId(${index})">🔔 Alerta</button>
                         <button class="btn-action btn-del" onclick="eliminarProveedor(${index})">🗑️</button>
                     </div>
                 </div>
@@ -405,7 +455,6 @@
         });
     }
 
-    if(!datosApp.recordatorios) datosApp.recordatorios = [];
     renderRecordatorios();
     actualizarPantalla();
 </script>
