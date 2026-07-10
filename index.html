@@ -43,7 +43,12 @@
         
         .card { background: var(--bg-surface); border-radius: 16px; padding: 20px; border: 1px solid #2d2d34; margin-bottom: 25px; }
         
-        /* DISEÑO DE CAJA ORIGINAL CON ESTILO MEJORADO */
+        /* Buscador / Lupa Estilo Minimalista */
+        .search-container { position: relative; margin-bottom: 15px; }
+        .search-input { width: 100%; background: var(--bg-card); border: 1px solid #3a3a44; border-radius: 10px; padding: 10px 12px 10px 38px; color: #fff; font-size: 14px; outline: none; }
+        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
+
+        /* Caja Grande */
         .cierre-display-grande { background: var(--bg-card); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; border: 1px solid #3a3a44; }
         .cierre-display-grande .titulo-central { font-size: 15px; color: var(--text-muted); font-weight: 500; margin-bottom: 5px; }
         .cierre-display-grande .monto-central { font-size: 36px; font-weight: 700; color: var(--success); margin-bottom: 15px; }
@@ -54,7 +59,6 @@
         .metodo-item .val-efec { color: #fff; font-weight: 600; }
         .metodo-item .val-neq { color: #818cf8; font-weight: 600; }
 
-        /* Input y Botonera Rápida */
         .cierre-input { width: 100%; background: var(--bg-card); border: 1px solid #3a3a44; border-radius: 8px; padding: 12px; color: #fff; font-size: 15px; margin-bottom: 12px; outline: none; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-quick { border: none; padding: 12px; font-size: 13px; font-weight: 600; border-radius: 10px; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; gap: 5px; }
@@ -66,9 +70,10 @@
         .fiados-list, .proveedores-list { display: flex; flex-direction: column; gap: 12px; }
         .item-row { background: var(--bg-card); padding: 15px; border-radius: 12px; border: 1px solid #3a3a44; display: flex; justify-content: space-between; align-items: center; }
         
-        .info-col { display: flex; flex-direction: column; gap: 2px; }
+        .info-col { display: flex; flex-direction: column; gap: 2px; flex: 1; }
         .name-row { display: flex; align-items: center; gap: 8px; }
-        .item-name { font-weight: 600; font-size: 15px; }
+        .item-name { font-weight: 600; font-size: 15px; cursor: pointer; text-decoration: underline; color: #fff; transition: color 0.2s; }
+        .item-name:hover { color: var(--accent); }
         .item-subtext { font-size: 11px; color: var(--text-muted); }
         .edit-badge { font-size: 10px; background: #444; color: #ccc; padding: 2px 6px; border-radius: 20px; cursor: pointer; }
         
@@ -80,6 +85,16 @@
         .btn-pay { background: rgba(16, 185, 129, 0.15); color: var(--success); }
         .btn-add-more { background: rgba(37, 99, 235, 0.15); color: var(--accent); }
         .btn-del { background: rgba(239, 68, 116, 0.15); color: var(--danger); font-size: 14px; }
+        
+        /* Botón Ver Más */
+        .btn-ver-mas { width: 100%; margin-top: 10px; background: rgba(255,255,255,0.04); border: 1px dashed #444; padding: 10px; border-radius: 10px; color: var(--text-muted); font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; transition: background 0.2s; }
+        .btn-ver-mas:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+        .historial-tabla { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; color: #fff; }
+        .historial-tabla th, .historial-tabla td { padding: 8px; text-align: left; border-bottom: 1px solid #3a3a44; }
+        .historial-tabla th { color: var(--text-muted); font-weight: 500; }
+        .txt-fiado { color: var(--danger); font-weight: 600; }
+        .txt-abono { color: var(--success); font-weight: 600; }
     </style>
 </head>
 <body>
@@ -95,10 +110,9 @@
         <button class="btn-backup import" onclick="importarDatos()">📂 Restaurar Copia</button>
     </div>
 
-    <!-- Contenedor de Alertas de Proveedores automáticas -->
+    <!-- Alertas Dinámicas Filtradas -->
     <div id="contenedor-recordatorios"></div>
 
-    <!-- SECCIÓN 1: CIERRE DE CAJA FORMATO GRANDE ORIGINAL -->
     <div class="section-title">📊 Cierre de Caja Diario</div>
     <div class="card">
         <div class="cierre-display-grande">
@@ -127,16 +141,21 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 2: CONTROL DE FIADOS -->
+    <!-- CONTROL DE FIADOS CON BUSCADOR -->
     <div class="section-title">
         <span>👥 Personas que Deben <span id="resumen-fiados" class="sub-resumen">$0</span></span>
         <button onclick="nuevoCliente()" style="background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer; font-size:14px;">+ Nuevo Cliente</button>
     </div>
     <div class="card">
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="busqueda-cliente" class="search-input" placeholder="Buscar cliente por nombre..." oninput="filtrarYRenderizarClientes()">
+        </div>
+        
         <div class="fiados-list" id="lista-fiados"></div>
+        <div id="contenedor-ver-mas"></div>
     </div>
 
-    <!-- SECCIÓN 3: ESTADO DE PROVEEDORES -->
     <div class="section-title">
         <span>🚚 Estado de Proveedores</span>
         <button onclick="nuevoProveedorFlujoRapido()" style="background:none; border:none; color:var(--warning); font-weight:600; cursor:pointer; font-size:14px;">+ Nuevo Proveedor</button>
@@ -155,6 +174,9 @@
         recordatorios: []
     };
 
+    // Control de paginación/ver todos
+    let mostrarTodosLosClientes = false;
+
     if (localStorage.getItem('libreta_inteligente_v5')) {
         datosApp = JSON.parse(localStorage.getItem('libreta_inteligente_v5'));
     }
@@ -163,100 +185,71 @@
         localStorage.setItem('libreta_inteligente_v5', JSON.stringify(datosApp));
     }
 
-    // --- FECHA ACTUAL AUTOMÁTICA EN FORMATO CORTO ---
-    function obtenerFechaActual() {
+    function obtenerFechaHoraActual() {
         const d = new Date();
-        return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+        const fecha = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+        let minutos = d.getMinutes();
+        if (minutos < 10) minutos = '0' + minutos;
+        const hora = `${d.getHours()}:${minutos}`;
+        return { fecha, completa: `${fecha} a las ${hora}` };
     }
 
-    // --- RESPALDOS ---
     function exportarDatos() {
         const dataStr = JSON.stringify(datosApp);
         const blob = new Blob([dataStr], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        const fecha = new Date().toLocaleDateString().replace(/\//g, '-');
-        a.href = url;
-        a.download = `Copia_Libreta_${fecha}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        Swal.fire({ icon: 'success', title: 'Copia Descargada', background: '#1a1a1e', color: '#fff' });
+        a.href = url; a.download = `Copia_Libreta.json`; a.click();
     }
 
     function importarDatos() {
-        Swal.fire({
-            title: '¿Restaurar copia?',
-            text: "Se reemplazarán los datos actuales.",
-            icon: 'warning',
-            showCancelButton: true,
-            background: '#1a1a1e', color: '#fff'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.json';
-                input.onchange = (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        try {
-                            datosApp = JSON.parse(event.target.result);
-                            guardar();
-                            actualizarPantalla();
-                            renderRecordatorios();
-                            Swal.fire({ icon: 'success', title: 'Restaurado', background: '#1a1a1e', color: '#fff' });
-                        } catch (error) {
-                            Swal.fire({ icon: 'error', title: 'Archivo inválido', background: '#1a1a1e', color: '#fff' });
-                        }
-                    };
-                    reader.readAsText(file);
-                };
-                input.click();
-            }
-        });
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                datosApp = JSON.parse(event.target.result);
+                guardar(); actualizarPantalla(); renderRecordatorios();
+            };
+            reader.readAsText(file);
+        };
+        input.click();
     }
 
-    // --- CONTROL DE CAJA DIARIA ---
     function registrarMovimiento(tipo, metodo) {
         const montoInput = document.getElementById('cierre-monto-input');
         const monto = parseFloat(montoInput.value);
-
-        if (isNaN(monto) || monto <= 0) {
-            Swal.fire({ icon: 'error', title: 'Escribe un monto válido', background: '#1a1a1e', color: '#fff' });
-            return;
-        }
-
-        const factor = (tipo === 'ingreso' ? 1 : -1);
-
-        if (metodo === 'efectivo') {
-            datosApp.cierreEfectivo += (monto * factor);
-        } else {
-            datosApp.cierreNequi += (monto * factor);
-        }
-
-        montoInput.value = '';
-        guardar();
-        actualizarPantalla();
+        if (isNaN(monto) || monto <= 0) return;
+        datosApp[metodo === 'efectivo' ? 'cierreEfectivo' : 'cierreNequi'] += (monto * (tipo === 'ingreso' ? 1 : -1));
+        montoInput.value = ''; guardar(); actualizarPantalla();
     }
 
-    // --- RECORDATORIOS DE ALERTAS SUPERIORES ---
     function renderRecordatorios() {
         const contenedor = document.getElementById('contenedor-recordatorios');
         contenedor.innerHTML = '';
         if(!datosApp.recordatorios) datosApp.recordatorios = [];
-        
+        const hoy = new Date(); hoy.setHours(0,0,0,0);
+
         datosApp.recordatorios.forEach((rec, index) => {
-            contenedor.innerHTML += `
-                <div class="alert-box">
-                    <div class="alert-title">🔔 RECORDATORIO ENLAZADO: ${rec.proveedor.toUpperCase()}</div>
-                    <div class="alert-text">
-                        Paga el <span style="color:var(--warning);">${rec.dia}</span>. 
-                        <span style="display:block; font-size:22px; color:#fff; margin-top:5px;">Valor: $${rec.valor.toLocaleString()}</span>
+            let mostrarAlerta = true;
+            if(rec.fechaRaw) {
+                const fechaLimite = new Date(rec.fechaRaw + 'T00:00:00');
+                const diferenciaDias = Math.ceil((fechaLimite - hoy) / (1000 * 60 * 60 * 24));
+                if(diferenciaDias > 2) mostrarAlerta = false;
+            }
+            if(mostrarAlerta) {
+                contenedor.innerHTML += `
+                    <div class="alert-box">
+                        <div class="alert-title">🔔 PROVEEDOR PRÓXIMO: ${rec.proveedor.toUpperCase()}</div>
+                        <div class="alert-text">
+                            Entrega/Pago el <span style="color:var(--warning);">${rec.dia}</span>. 
+                            <span style="display:block; font-size:22px; color:#fff; margin-top:5px;">Valor: $${rec.valor.toLocaleString()}</span>
+                        </div>
+                        <button class="alert-btn" onclick="eliminarRecordatorio(${index})">✔ Confirmar y Quitar Aviso</button>
                     </div>
-                    <button class="alert-btn" onclick="eliminarRecordatorio(${index})">✔ Confirmar y Quitar Aviso</button>
-                </div>
-            `;
+                `;
+            }
         });
     }
 
@@ -265,75 +258,100 @@
         guardar(); renderRecordatorios();
     }
 
-    // --- FLUJO RÁPIDO PARA PROVEEDORES (AHORRO DE TIEMPO) ---
     function nuevoProveedorFlujoRapido() {
         Swal.fire({
             title: 'Nuevo Proveedor',
             background: '#1a1a1e', color: '#fff',
             html: `
-                <input id="prov-nombre" class="swal2-input" placeholder="Nombre (Ej: Postobón)" style="margin-bottom:12px; background:#26262b; color:#fff;">
-                <input id="prov-monto" type="number" class="swal2-input" placeholder="Monto a cancelar ($)" style="margin-bottom:12px; background:#26262b; color:#fff;">
-                <label style="font-size:12px; color:var(--text-muted); display:block; text-align:left; margin-left:25px;">Fecha de entrega / pago:</label>
-                <input id="prov-fecha" type="date" class="swal2-input" style="background:#26262b; color:#fff; padding:10px;">
+                <input id="prov-nombre" class="swal2-input" placeholder="Nombre" style="margin-bottom:12px; background:#26262b; color:#fff;">
+                <input id="prov-monto" type="number" class="swal2-input" placeholder="Monto ($)" style="margin-bottom:12px; background:#26262b; color:#fff;">
+                <input id="prov-fecha" type="date" class="swal2-input" style="background:#26262b; color:#fff;">
             `,
             showCancelButton: true,
-            confirmButtonText: 'Guardar Proveedor',
+            confirmButtonText: 'Guardar',
             preConfirm: () => {
                 const nombre = document.getElementById('prov-nombre').value.trim();
-                const monto = parseFloat(document.getElementById('prov-monto').value);
+                const monto = parseFloat(document.getElementById('prov-monto').value) || 0;
                 const fecha = document.getElementById('prov-fecha').value;
-                if(!nombre) { Swal.showValidationMessage('El nombre es obligatorio'); return false; }
-                return { nombre, monto: isNaN(monto) ? 0 : monto, fecha: fecha || 'Sin fecha' };
+                if(!nombre) return false;
+                return { nombre, monto, fecha };
             }
         }).then((res) => {
             if (res.isConfirmed) {
                 const p = res.value;
-                // Guardar en la lista
                 datosApp.proveedores.push({ nombre: p.nombre, saldoPendiente: p.monto, fechaEntrega: p.fecha });
-                
-                // Si tiene monto, activar alerta automáticamente en la parte superior
-                if(p.monto > 0) {
-                    if(!datosApp.recordatorios) datosApp.recordatorios = [];
-                    // Convertir formato de fecha YYYY-MM-DD a DD/MM/YYYY para visualización limpia
-                    let fechaFormateada = p.fecha;
-                    if(p.fecha !== 'Sin fecha') {
-                        const partes = p.fecha.split('-');
-                        fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
-                    }
-                    datosApp.recordatorios.push({ proveedor: p.nombre, dia: fechaFormateada, valor: p.monto });
+                if(p.monto > 0 && p.fecha) {
+                    const partes = p.fecha.split('-');
+                    const fFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                    datosApp.recordatorios.push({ proveedor: p.nombre, dia: fFormateada, valor: p.monto, fechaRaw: p.fecha });
                 }
-                
                 guardar(); actualizarPantalla(); renderRecordatorios();
             }
         });
     }
 
-    // --- CONTROL DE FIADOS AUTOMATIZADO ---
+    function verHistorialCliente(index) {
+        const c = datosApp.clientes[index];
+        let filasHtml = '';
+        if(!c.historial || c.historial.length === 0) {
+            filasHtml = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No hay movimientos registrados.</td></tr>`;
+        } else {
+            c.historial.forEach(h => {
+                const claseMonto = h.tipo === 'fiado' ? 'txt-fiado' : 'txt-abono';
+                filasHtml += `
+                    <tr>
+                        <td>${h.fechaHora}</td>
+                        <td>${h.tipo.toUpperCase()}</td>
+                        <td class="${claseMonto}">${h.tipo === 'fiado' ? '+' : '-'} $${h.monto.toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+        }
+        Swal.fire({
+            title: `Historial de ${c.nombre}`,
+            background: '#1a1a1e', color: '#fff',
+            html: `<div style="max-height: 250px; overflow-y: auto;"><table class="historial-tabla"><thead><tr><th>Fecha y Hora</th><th>Tipo</th><th>Monto</th></tr></thead><tbody>${filasHtml}</tbody></table></div>`,
+            confirmButtonText: 'Cerrar'
+        });
+    }
+
     function nuevoCliente() {
         Swal.fire({
             title: 'Agregar Fiador',
             background: '#1a1a1e', color: '#fff',
             html: `
-                <input id="cli-nombre" class="swal2-input" placeholder="Nombre del cliente" style="margin-bottom:12px; background:#26262b; color:#fff;">
-                <input id="cli-inicial" type="number" class="swal2-input" placeholder="Monto inicial fiado ($ opcional)" style="background:#26262b; color:#fff;">
+                <input id="cli-nombre" class="swal2-input" placeholder="Nombre" style="margin-bottom:12px; background:#26262b; color:#fff;">
+                <input id="cli-inicial" type="number" class="swal2-input" placeholder="Monto inicial ($ opcional)" style="background:#26262b; color:#fff;">
             `,
             showCancelButton: true,
             confirmButtonText: 'Registrar',
             preConfirm: () => {
                 const nombre = document.getElementById('cli-nombre').value.trim();
-                const inicial = parseFloat(document.getElementById('cli-inicial').value);
-                if(!nombre) { Swal.showValidationMessage('El nombre es obligatorio'); return false; }
-                return { nombre, saldo: isNaN(inicial) ? 0 : inicial };
+                const inicial = parseFloat(document.getElementById('cli-inicial').value) || 0;
+                if(!nombre) return false;
+                return { nombre, saldo: inicial };
             }
         }).then((res) => {
             if (res.isConfirmed) {
-                const fechaHoy = obtenerFechaActual();
-                datosApp.clientes.push({ 
-                    nombre: res.value.nombre, 
-                    saldo: res.value.saldo, 
-                    fechaUltimo: fechaHoy,
-                    cambiosNombre: 0 
-                });
+                const tiempo = obtenerFechaHoraActual();
+                const nuevoH = res.value.saldo > 0 ? [{ tipo: 'fiado', monto: res.value.saldo, fechaHora: tiempo.completa }] : [];
+                datosApp.clientes.push({ nombre: res.value.nombre, saldo: res.value.saldo, fechaUltimo: tiempo.fecha, historial: nuevoH, cambiosNombre: 0 });
+                guardar(); actualizarPantalla();
+            }
+        });
+    }
+
+    function modificarSaldo(index, accion) {
+        const c = datosApp.clientes[index];
+        Swal.fire({ title: accion === 'fiar' ? `Fiar a ${c.nombre}` : `Abonar de ${c.nombre}`, input: 'number', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((res) => {
+            const valor = parseFloat(res.value);
+            if (res.isConfirmed && valor > 0) {
+                c.saldo += (accion === 'fiar' ? valor : -valor);
+                if (c.saldo < 0) c.saldo = 0;
+                const tiempo = obtenerFechaHoraActual();
+                c.fechaUltimo = tiempo.fecha;
+                if(!c.historial) c.historial = [];
+                c.historial.push({ tipo: accion === 'fiar' ? 'fiado' : 'abono', monto: valor, fechaHora: tiempo.completa });
                 guardar(); actualizarPantalla();
             }
         });
@@ -350,93 +368,104 @@
         });
     }
 
-    function modificarSaldo(index, accion) {
-        const c = datosApp.clientes[index];
-        Swal.fire({ 
-            title: accion === 'fiar' ? `Fiar a ${c.nombre}` : `Abonar de ${c.nombre}`, 
-            input: 'number', 
-            showCancelButton: true, 
-            background: '#1a1a1e', 
-            color: '#fff' 
-        }).then((res) => {
-            if (res.isConfirmed && parseFloat(res.value) > 0) {
-                const valor = parseFloat(res.value);
-                c.saldo += (accion === 'fiar' ? valor : -valor);
-                if (c.saldo < 0) c.saldo = 0;
-                
-                // Actualización automática de fecha en base de datos al realizar movimiento
-                c.fechaUltimo = obtenerFechaActual();
-                
-                guardar(); actualizarPantalla();
-            }
-        });
-    }
-
     function eliminarCliente(index) {
         Swal.fire({ title: '¿Eliminar cuenta?', text: 'Se borrará permanentemente.', icon: 'warning', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((result) => {
-            if (result.isConfirmed) {
-                datosApp.clientes.splice(index, 1);
-                guardar(); actualizarPantalla();
-            }
+            if (result.isConfirmed) { datosApp.clientes.splice(index, 1); guardar(); actualizarPantalla(); }
         });
     }
 
     function eliminarProveedor(index) {
         Swal.fire({ title: '¿Eliminar proveedor?', icon: 'warning', showCancelButton: true, background: '#1a1a1e', color: '#fff' }).then((result) => {
-            if (result.isConfirmed) {
-                datosApp.proveedores.splice(index, 1);
-                guardar(); actualizarPantalla();
-            }
+            if (result.isConfirmed) { datosApp.proveedores.splice(index, 1); guardar(); actualizarPantalla(); }
         });
     }
 
-    // --- RENDERIZADO GENERAL ACTUALIZADO ---
-    function actualizarPantalla() {
-        // Render de montos independientes de caja
-        const totalGen = datosApp.cierreEfectivo + datosApp.cierreNequi;
-        document.getElementById('caja-efectivo').innerText = `$${datosApp.cierreEfectivo.toLocaleString()}`;
-        document.getElementById('caja-nequi').innerText = `$${datosApp.cierreNequi.toLocaleString()}`;
-        document.getElementById('caja-total').innerText = `$${totalGen.toLocaleString()}`;
-        
-        // Calcular Resumen de Fiados totales
-        let totalFiadoAcumulado = 0;
-        let cantPersonasDeben = 0;
-        datosApp.clientes.forEach(c => {
-            if(c.saldo > 0) {
-                totalFiadoAcumulado += c.saldo;
-                cantPersonasDeben++;
-            }
-        });
-        document.getElementById('resumen-fiados').innerText = `${cantPersonasDeben} deben total: $${totalFiadoAcumulado.toLocaleString()}`;
-
-        // Clientes con fechas guardadas
+    // --- FILTRADO INTELIGENTE Y RENDER DE CLIENTES LIMITADO A 5 ---
+    function filtrarYRenderizarClientes() {
+        const query = document.getElementById('busqueda-cliente').value.toLowerCase().trim();
         const listaC = document.getElementById('lista-fiados');
-        listaC.innerHTML = datosApp.clientes.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">Sin clientes registrados.</div>` : '';
-        datosApp.clientes.forEach((c, index) => {
+        const contenedorVerMas = document.getElementById('contenedor-ver-mas');
+        
+        listaC.innerHTML = '';
+        contenedorVerMas.innerHTML = '';
+
+        // Filtrar según el input de búsqueda
+        let clientesFiltrados = datosApp.clientes.map((c, originalIndex) => ({ ...c, originalIndex }));
+        
+        if (query !== '') {
+            clientesFiltrados = clientesFiltrados.filter(c => c.nombre.toLowerCase().includes(query));
+        }
+
+        const totalEncontrados = clientesFiltrados.length;
+        
+        if (totalEncontrados === 0) {
+            listaC.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:10px;">Ningún cliente coincide.</div>`;
+            return;
+        }
+
+        // Cortar la lista a un máximo de 5 si no se ha presionado "Ver todos" y no hay búsqueda activa
+        // Nota: Si hay una búsqueda activa, es mejor mostrar los resultados directos.
+        let limite = (mostrarTodosLosClientes || query !== '') ? totalEncontrados : 5;
+        let mostrados = clientesFiltrados.slice(0, limite);
+
+        mostrados.forEach((c) => {
             listaC.innerHTML += `
                 <div class="item-row">
                     <div class="info-col">
                         <div class="name-row">
-                            <span class="item-name">${c.nombre}</span>
-                            ${c.cambiosNombre < 2 ? `<span class="edit-badge" onclick="editarNombre(${index})">📝</span>` : ''}
+                            <span class="item-name" onclick="verHistorialCliente(${c.originalIndex})">${c.nombre}</span>
+                            ${c.cambiosNombre < 2 ? `<span class="edit-badge" onclick="editedName(${c.originalIndex})">📝</span>` : ''}
                         </div>
-                        <span class="item-subtext">Último movimiento: ${c.fechaUltimo || obtenerFechaActual()}</span>
+                        <span class="item-subtext">Último movimiento: ${c.fechaUltimo}</span>
                     </div>
                     <div class="actions-row">
                         <div class="item-monto monto-deuda" style="margin-right:8px;">$${c.saldo.toLocaleString()}</div>
-                        <button class="btn-action btn-add-more" onclick="modificarSaldo(${index}, 'fiar')">+ Fiar</button>
-                        <button class="btn-action btn-pay" onclick="modificarSaldo(${index}, 'pagar')">✔</button>
-                        <button class="btn-action btn-del" onclick="eliminarCliente(${index})">🗑️</button>
+                        <button class="btn-action btn-add-more" onclick="modificarSaldo(${c.originalIndex}, 'fiar')">+ Fiar</button>
+                        <button class="btn-action btn-pay" onclick="modificarSaldo(${c.originalIndex}, 'pagar')">✔</button>
+                        <button class="btn-action btn-del" onclick="eliminarCliente(${c.originalIndex})">🗑️</button>
                     </div>
                 </div>
             `;
         });
 
+        // Si hay más de 5 y no se están mostrando todos (y no hay búsqueda filtrando), poner el botón de expansión
+        if (totalEncontrados > 5 && !mostrarTodosLosClientes && query === '') {
+            contenedorVerMas.innerHTML = `
+                <button class="btn-ver-mas" onclick="conmutarVerTodos()">👁️ Ver todos los clientes (${totalEncontrados})</button>
+            `;
+        } else if (mostrarTodosLosClientes && query === '' && totalEncontrados > 5) {
+            contenedorVerMas.innerHTML = `
+                <button class="btn-ver-mas" onclick="conmutarVerTodos()">🔼 Mostrar menos (Ver solo 5)</button>
+            `;
+        }
+    }
+
+    function conmutarVerTodos() {
+        mostrarTodosLosClientes = !mostrarTodosLosClientes;
+        filtrarYRenderizarClientes();
+    }
+
+    // Adaptador por si se llama desde el HTML viejo
+    function editedName(idx) { editarNombre(idx); }
+
+    function actualizarPantalla() {
+        const totalGen = datosApp.cierreEfectivo + datosApp.cierreNequi;
+        document.getElementById('caja-efectivo').innerText = `$${datosApp.cierreEfectivo.toLocaleString()}`;
+        document.getElementById('caja-nequi').innerText = `$${datosApp.cierreNequi.toLocaleString()}`;
+        document.getElementById('caja-total').innerText = `$${totalGen.toLocaleString()}`;
+        
+        let totalFiadoAcumulado = 0; let cantPersonasDeben = 0;
+        datosApp.clientes.forEach(c => { if(c.saldo > 0) { totalFiadoAcumulado += c.saldo; cantPersonasDeben++; } });
+        document.getElementById('resumen-fiados').innerText = `${cantPersonasDeben} deben total: $${totalFiadoAcumulado.toLocaleString()}`;
+
+        // Renderizar los clientes usando la función controlada
+        filtrarYRenderizarClientes();
+
         // Proveedores
         const listaP = document.getElementById('lista-proveedores');
         listaP.innerHTML = datosApp.proveedores.length === 0 ? `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">Sin proveedores registrados.</div>` : '';
         datosApp.proveedores.forEach((p, index) => {
-            let fechaMostrar = p.fechaEntrega || 'Sin fecha';
+            let fechaMostrar = 'Sin fecha';
             if(p.fechaEntrega && p.fechaEntrega.includes('-')) {
                 const partes = p.fechaEntrega.split('-');
                 fechaMostrar = `${partes[2]}/${partes[1]}/${partes[0]}`;
@@ -444,7 +473,7 @@
             listaP.innerHTML += `
                 <div class="item-row">
                     <div class="info-col">
-                        <span class="item-name" style="font-weight:600;">${p.nombre}</span>
+                        <span class="item-name" style="text-decoration:none; cursor:default;">${p.nombre}</span>
                         <span style="font-size:12px; color:var(--text-muted);">Deuda: $${p.saldoPendiente.toLocaleString()} • Entrega: ${fechaMostrar}</span>
                     </div>
                     <div class="actions-row">
