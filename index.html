@@ -305,6 +305,7 @@
         cierreEfectivo: 0,
         cierreNequi: 0,
         cierreEgresos: 0,
+        listaEgresosHoy: [], // NUEVO: Guardará los detalles de los gastos del día
         clientes: [],
         proveedores: [],
         recordatorios: [],
@@ -322,6 +323,7 @@
         // Validar integridad de nuevos campos
         if (!datosApp.cierreEgresos) datosApp.cierreEgresos = 0;
         if (!datosApp.articulos) datosApp.articulos = [];
+        if (!datosApp.listaEgresosHoy) datosApp.listaEgresosHoy = [];
     }
 
     function guardar() {
@@ -465,15 +467,20 @@
             reader.onload = (event) => {
                 try {
                     const parsed = JSON.parse(event.target.result);
-                    if(parsed && typeof parsed === 'object') {
+                    // NUEVA VALIDACIÓN: Confirmar que es el JSON correcto de nuestra app
+                    if(parsed && typeof parsed === 'object' && Array.isArray(parsed.clientes) && Array.isArray(parsed.historialCierres)) {
                         datosApp = parsed;
                         if(!datosApp.articulos) datosApp.articulos = [];
                         if(!datosApp.cierreEgresos) datosApp.cierreEgresos = 0;
+                        if(!datosApp.listaEgresosHoy) datosApp.listaEgresosHoy = [];
+                        
                         guardar(); aplicarTemaVisual(); actualizarPantalla(); renderRecordatorios();
                         Swal.fire({ title: 'Éxito', text: 'Datos cargados correctamente', icon: 'success', background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
+                    } else {
+                        throw new Error("Estructura de JSON inválida");
                     }
                 } catch(err) {
-                    Swal.fire({ title: 'Error', text: 'Archivo de respaldo inválido', icon: 'error', background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
+                    Swal.fire({ title: 'Error', text: 'El archivo subido no es válido o está corrupto.', icon: 'error', background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
                 }
             };
             reader.readAsText(file);
@@ -496,7 +503,6 @@
         const montoDetectado = procesarMontoFormateado(montoInput.value);
 
         if (montoDetectado > 0) {
-            // Si el usuario ya colocó el monto en la pantalla principal, solo le pedimos la descripción
             Swal.fire({
                 title: 'Descripción del Egreso / Gasto',
                 text: `Valor registrado: ${formataMoneda(montoDetectado)}`,
@@ -515,13 +521,17 @@
             }).then((res) => {
                 if (res.isConfirmed) {
                     datosApp.cierreEgresos += montoDetectado;
-                    montoInput.value = ''; // Limpiamos el input principal
+                    
+                    // NUEVO: Guardar la descripción en la lista del día
+                    if (!datosApp.listaEgresosHoy) datosApp.listaEgresosHoy = [];
+                    datosApp.listaEgresosHoy.push({ descripcion: res.value, monto: montoDetectado }); 
+                    
+                    montoInput.value = ''; 
                     guardar(); actualizarPantalla();
                     Swal.fire({ title: 'Éxito', text: `Gasto por ${formataMoneda(montoDetectado)} (${res.value}) registrado`, icon: 'success', timer: 1500, showConfirmButton: false, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
                 }
             });
         } else {
-            // Si no hay monto arriba, pedimos ambos datos como antes
             Swal.fire({
                 title: 'Registrar Egreso / Gasto',
                 background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
@@ -543,6 +553,11 @@
             }).then((res) => {
                 if (res.isConfirmed) {
                     datosApp.cierreEgresos += res.value.monto;
+                    
+                    // NUEVO: Guardar la descripción en la lista del día
+                    if (!datosApp.listaEgresosHoy) datosApp.listaEgresosHoy = [];
+                    datosApp.listaEgresosHoy.push({ descripcion: res.value.desc, monto: res.value.monto });
+                    
                     guardar(); actualizarPantalla();
                     Swal.fire({ title: 'Éxito', text: `Gasto por ${formataMoneda(res.value.monto)} registrado`, icon: 'success', timer: 1500, showConfirmButton: false, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
                 }
@@ -589,8 +604,20 @@
             if (result.isConfirmed) {
                 const tiempo = obtenerFechaHoraActual();
                 if(!datosApp.historialCierres) datosApp.historialCierres = [];
-                datosApp.historialCierres.unshift({ fecha: tiempo.fecha, efectivo: datosApp.cierreEfectivo, nequi: datosApp.cierreNequi, egresos: egresosHoy, total: netoHoy });
+                
+                // NUEVO: Guardamos la lista de egresos en el historial
+                datosApp.historialCierres.unshift({ 
+                    fecha: tiempo.fecha, 
+                    efectivo: datosApp.cierreEfectivo, 
+                    nequi: datosApp.cierreNequi, 
+                    egresos: egresosHoy, 
+                    detalleEgresos: datosApp.listaEgresosHoy || [], 
+                    total: netoHoy 
+                });
+                
                 datosApp.cierreEfectivo = 0; datosApp.cierreNequi = 0; datosApp.cierreEgresos = 0;
+                datosApp.listaEgresosHoy = []; // Limpiamos para el próximo día
+                
                 guardar(); actualizarPantalla();
             }
         });
@@ -605,6 +632,35 @@
                 if (isModalOpen) verTodosCierres();
             }
         });
+    }
+
+    // NUEVO: Ver detalles de los gastos guardados en el historial
+    function verDetalleGastosHistorico(indexCierre) {
+        const cierre = datosApp.historialCierres[indexCierre];
+        const gastos = cierre.detalleEgresos || [];
+
+        if (gastos.length === 0) {
+            Swal.fire({ 
+                title: 'Sin detalles', 
+                text: 'No hay descripciones de gastos para este día o es un registro de una versión anterior.', 
+                icon: 'info', 
+                background: datosApp.temaClaro ? '#fff' : '#1a1a1e', 
+                color: datosApp.temaClaro ? '#000' : '#fff' 
+            });
+            return;
+        }
+
+        let htmlGastos = '<div style="text-align: left; display: flex; flex-direction: column; gap: 10px;">';
+        gastos.forEach(g => {
+            htmlGastos += `
+                <div style="background: var(--bg-card); padding: 10px; border-radius: 8px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 14px;">📝 ${g.descripcion}</span>
+                    <span style="color: var(--danger); font-weight: 700;">${formataMoneda(g.monto)}</span>
+                </div>`;
+        });
+        htmlGastos += '</div>';
+
+        abrirModalGlobal(`Gastos del ${cierre.fecha}`, htmlGastos);
     }
 
     // DICCIONARIO DE ARTÍCULOS
@@ -809,11 +865,10 @@
     }
 
     function verTodosProveedores() {
-        // Ordenamos los proveedores dinámicamente antes de renderizarlos
         let proveedoresOrdenados = datosApp.proveedores.map((p, idx) => ({ ...p, originalIndex: idx }));
         proveedoresOrdenados.sort((a, b) => {
             if (!a.fechaEntrega && !b.fechaEntrega) return 0;
-            if (!a.fechaEntrega) return 1; // Si no tiene fecha, va al final
+            if (!a.fechaEntrega) return 1; 
             if (!b.fechaEntrega) return -1;
             return new Date(a.fechaEntrega + 'T00:00:00') - new Date(b.fechaEntrega + 'T00:00:00');
         });
@@ -900,7 +955,20 @@
     }
 
     function editarNombre(index, isModalOpen = false) {
-        let c = datosApp.clientes[index]; if (c.cambiosNombre >= 2) return;
+        let c = datosApp.clientes[index]; 
+        
+        // NUEVA VALIDACIÓN: Avisar si superó el límite de cambios
+        if (c.cambiosNombre >= 2) {
+            Swal.fire({ 
+                title: 'Límite alcanzado', 
+                text: 'Solo puedes cambiar el nombre de un cliente 2 veces.', 
+                icon: 'warning', 
+                background: datosApp.temaClaro ? '#fff' : '#1a1a1e', 
+                color: datosApp.temaClaro ? '#000' : '#fff' 
+            });
+            return; 
+        }
+
         Swal.fire({ title: 'Editar Nombre', input: 'text', inputValue: c.nombre, showCancelButton: true, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' }).then((res) => {
             if (res.isConfirmed && res.value) { 
                 c.nombre = res.value.trim(); c.cambiosNombre += 1; 
@@ -991,6 +1059,7 @@
                     </div>
                     <div class="actions-row">
                         <span style="font-size:15px; font-weight:700; color:var(--success); margin-right:10px;">Neto: ${formataMoneda(h.total)}</span>
+                        ${(h.egresos || 0) > 0 ? `<button class="btn-action btn-add-more" style="padding:4px 8px; font-size:11px;" onclick="verDetalleGastosHistorico(${index})">👁️ Gastos</button>` : ''}
                         <button class="btn-action btn-del" style="padding:4px 8px; font-size:11px;" onclick="eliminarCierreHistorico(${index}, true)">🗑️</button>
                     </div>
                 </div>
@@ -1072,6 +1141,7 @@
                         </div>
                         <div class="actions-row">
                             <span style="font-size:15px; font-weight:700; color:var(--success); margin-right:10px;">Neto: ${formataMoneda(h.total)}</span>
+                            ${(h.egresos || 0) > 0 ? `<button class="btn-action btn-add-more" style="padding:4px 8px; font-size:11px;" onclick="verDetalleGastosHistorico(${index})">👁️ Gastos</button>` : ''}
                             <button class="btn-action btn-del" style="padding:4px 8px; font-size:11px;" onclick="eliminarCierreHistorico(${index})">🗑️</button>
                         </div>
                     </div>
