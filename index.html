@@ -91,7 +91,7 @@
 
         .btn-close-day { width: 100%; background: rgba(245, 158, 11, 0.12); border: 1px dashed var(--warning); color: var(--warning); padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
 
-        .cierre-input { width: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: var(--text-main); font-size: 15px; margin-bottom: 12px; outline: none; }
+        .cierre-input { width: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: var(--text-main); font-size: 16px; font-weight: 600; margin-bottom: 12px; outline: none; text-align: center; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-quick { border: none; padding: 12px; font-size: 13px; font-weight: 600; border-radius: 10px; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .btn-quick.in-efec { background: #15803d; }
@@ -256,7 +256,7 @@
             <button class="btn-close-day" onclick="ejecutarCierreDeCaja()">🔒 Cerrar Caja de Hoy y Reiniciar</button>
         </div>
         
-        <input type="text" inputmode="numeric" pattern="[0-9]*" id="cierre-monto-input" class="cierre-input" placeholder="Digite el monto de venta sin puntos">
+        <input type="text" inputmode="numeric" id="cierre-monto-input" class="cierre-input" placeholder="Digite el monto de venta" oninput="limpiarYFormatearInput(this)">
         
         <div class="btn-grid">
             <button class="btn-quick in-efec" onclick="registrarMovimiento('ingreso', 'efectivo')">➕ Venta Efectivo</button>
@@ -291,7 +291,7 @@
     </div>
 
     <div class="section-title">
-        <span>🚚 Estado de Proveedores</span>
+        <span>🚚 Estado de Proveedores (Próximos Primero)</span>
         <button onclick="nuevoProveedorFlujoRapido()" style="background:none; border:none; color:var(--warning); font-weight:600; cursor:pointer; font-size:14px;">+ Nuevo Proveedor</button>
     </div>
     <div class="card">
@@ -328,23 +328,26 @@
         localStorage.setItem('libreta_inteligente_v8', JSON.stringify(datosApp));
     }
 
-    // FORMATEADOR ESTRICTO COLOMBIANO CON PESOS ($2.000)
+    // FORMATEADOR ESTRICTO COLOMBIANO CON PESOS ($ 2.000)
     function formataMoneda(valor) {
-        return '$' + Math.round(valor || 0).toLocaleString('es-CO');
+        return '$ ' + Math.round(valor || 0).toLocaleString('es-CO');
     }
 
+    // FORMATEA EL INPUT CON $ Y PUNTOS EN TIEMPO REAL
     function limpiarYFormatearInput(inputElement) {
         let val = inputElement.value.replace(/\D/g, "");
         if(val !== "") {
-            inputElement.value = parseInt(val, 10).toLocaleString('es-CO');
+            inputElement.value = '$ ' + parseInt(val, 10).toLocaleString('es-CO');
         } else {
             inputElement.value = "";
         }
     }
 
+    // CONVIERTE TEXTO FORMATEADO A NÚMERO SEGURO
     function procesarMontoFormateado(texto) {
         if(!texto) return 0;
-        return parseFloat(texto.replace(/\./g, "")) || 0;
+        let limpio = texto.replace(/\D/g, "");
+        return parseFloat(limpio) || 0;
     }
 
     // LÓGICA DE BLOQUEO DE ACCESO POR DÍA (PIN 0000)
@@ -391,7 +394,7 @@
         }
     }
 
-    // Escuchar teclado fisico para PIN
+    // Escuchar teclado físico para PIN
     window.addEventListener('keydown', (e) => {
         const lockScreen = document.getElementById('lock-screen');
         if (lockScreen && lockScreen.style.display === 'flex') {
@@ -481,38 +484,70 @@
     // REGISTRO DE VENTAS Y CONTABILIDAD
     function registrarMovimiento(tipo, metodo) {
         const montoInput = document.getElementById('cierre-monto-input');
-        const monto = parseFloat(montoInput.value);
+        const monto = procesarMontoFormateado(montoInput.value);
         if (isNaN(monto) || monto <= 0) return;
         datosApp[metodo === 'efectivo' ? 'cierreEfectivo' : 'cierreNequi'] += monto;
         montoInput.value = ''; guardar(); actualizarPantalla();
     }
 
+    // REGISTRO DE GASTO INTELIGENTE (Detecta si ya escribiste el valor arriba)
     function registrarGastoEgreso() {
-        Swal.fire({
-            title: 'Registrar Egreso / Gasto',
-            background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
-            html: `
-                <input id="egr-desc" class="swal2-input" placeholder="Descripción (Ej. Bolsa, Gasto Luz)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
-                <input id="egr-monto" type="text" class="swal2-input" placeholder="Monto ($)" style="background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
-            `,
-            showCancelButton: true,
-            confirmButtonText: 'Registrar',
-            preConfirm: () => {
-                const desc = document.getElementById('egr-desc').value.trim();
-                const monto = procesarMontoFormateado(document.getElementById('egr-monto').value);
-                if (!desc || monto <= 0) {
-                    Swal.showValidationMessage('La descripción y el monto son requeridos');
-                    return false;
+        const montoInput = document.getElementById('cierre-monto-input');
+        const montoDetectado = procesarMontoFormateado(montoInput.value);
+
+        if (montoDetectado > 0) {
+            // Si el usuario ya colocó el monto en la pantalla principal, solo le pedimos la descripción
+            Swal.fire({
+                title: 'Descripción del Egreso / Gasto',
+                text: `Valor registrado: ${formataMoneda(montoDetectado)}`,
+                input: 'text',
+                inputPlaceholder: 'Ej. Bolsas, Pago de luz, Arroz proveedor...',
+                background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
+                showCancelButton: true,
+                confirmButtonText: 'Registrar Egreso',
+                preConfirm: (desc) => {
+                    if (!desc || desc.trim() === "") {
+                        Swal.showValidationMessage('La descripción es requerida');
+                        return false;
+                    }
+                    return desc.trim();
                 }
-                return { desc, monto };
-            }
-        }).then((res) => {
-            if (res.isConfirmed) {
-                datosApp.cierreEgresos += res.value.monto;
-                guardar(); actualizarPantalla();
-                Swal.fire({ title: 'Éxito', text: `Gasto por ${formataMoneda(res.value.monto)} registrado`, icon: 'success', timer: 1500, showConfirmButton: false, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
-            }
-        });
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    datosApp.cierreEgresos += montoDetectado;
+                    montoInput.value = ''; // Limpiamos el input principal
+                    guardar(); actualizarPantalla();
+                    Swal.fire({ title: 'Éxito', text: `Gasto por ${formataMoneda(montoDetectado)} (${res.value}) registrado`, icon: 'success', timer: 1500, showConfirmButton: false, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
+                }
+            });
+        } else {
+            // Si no hay monto arriba, pedimos ambos datos como antes
+            Swal.fire({
+                title: 'Registrar Egreso / Gasto',
+                background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
+                html: `
+                    <input id="egr-desc" class="swal2-input" placeholder="Descripción (Ej. Bolsa, Gasto Luz)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
+                    <input id="egr-monto" type="text" class="swal2-input" placeholder="Monto ($)" style="background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Registrar',
+                preConfirm: () => {
+                    const desc = document.getElementById('egr-desc').value.trim();
+                    const monto = procesarMontoFormateado(document.getElementById('egr-monto').value);
+                    if (!desc || monto <= 0) {
+                        Swal.showValidationMessage('La descripción y el monto son requeridos');
+                        return false;
+                    }
+                    return { desc, monto };
+                }
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    datosApp.cierreEgresos += res.value.monto;
+                    guardar(); actualizarPantalla();
+                    Swal.fire({ title: 'Éxito', text: `Gasto por ${formataMoneda(res.value.monto)} registrado`, icon: 'success', timer: 1500, showConfirmButton: false, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
+                }
+            });
+        }
     }
 
     function ejecutarCierreDeCaja() {
@@ -606,8 +641,8 @@
             background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
             html: `
                 <input id="edit-art-nombre" class="swal2-input" value="${a.nombre}" placeholder="Nombre y Medida" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
-                <input id="edit-art-costo" type="text" class="swal2-input" value="${a.costo.toLocaleString('es-CO')}" placeholder="Precio de Costo ($)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
-                <input id="edit-art-venta" type="text" class="swal2-input" value="${a.venta.toLocaleString('es-CO')}" placeholder="Precio de Venta ($)" style="background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
+                <input id="edit-art-costo" type="text" class="swal2-input" value="$ ${a.costo.toLocaleString('es-CO')}" placeholder="Precio de Costo ($)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
+                <input id="edit-art-venta" type="text" class="swal2-input" value="$ ${a.venta.toLocaleString('es-CO')}" placeholder="Precio de Venta ($)" style="background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
             `,
             showCancelButton: true,
             confirmButtonText: 'Guardar Cambios',
@@ -731,7 +766,7 @@
         });
     }
 
-    // PROVEEDORES
+    // PROVEEDORES ORDENADOS POR FECHA (MÁS PRÓXIMA PRIMERO)
     function nuevoProveedorFlujoRapido() {
         Swal.fire({
             title: 'Nuevo Proveedor',
@@ -774,8 +809,17 @@
     }
 
     function verTodosProveedores() {
+        // Ordenamos los proveedores dinámicamente antes de renderizarlos
+        let proveedoresOrdenados = datosApp.proveedores.map((p, idx) => ({ ...p, originalIndex: idx }));
+        proveedoresOrdenados.sort((a, b) => {
+            if (!a.fechaEntrega && !b.fechaEntrega) return 0;
+            if (!a.fechaEntrega) return 1; // Si no tiene fecha, va al final
+            if (!b.fechaEntrega) return -1;
+            return new Date(a.fechaEntrega + 'T00:00:00') - new Date(b.fechaEntrega + 'T00:00:00');
+        });
+
         let html = `<div style="max-height: 60vh; overflow-y: auto; display:flex; flex-direction:column; gap:8px;">`;
-        datosApp.proveedores.forEach((p, index) => {
+        proveedoresOrdenados.forEach((p) => {
             let partes = p.fechaEntrega ? p.fechaEntrega.split('-') : [];
             html += `
                 <div class="item-row" style="margin-bottom:0;">
@@ -783,7 +827,7 @@
                         <span style="font-weight:600;">${p.nombre}</span>
                         <span style="font-size:12px; color:var(--text-muted);">Deuda: ${formataMoneda(p.saldoPendiente)} • Entrega: ${partes.length>0 ? `${partes[2]}/${partes[1]}/${partes[0]}` : 'Sin fecha'}</span>
                     </div>
-                    <button class="btn-action btn-del" onclick="eliminarProveedor(${index}, true)">🗑️</button>
+                    <button class="btn-action btn-del" onclick="eliminarProveedor(${p.originalIndex}, true)">🗑️</button>
                 </div>
             `;
         });
@@ -1039,15 +1083,23 @@
             }
         }
 
-        // Proveedores (Límite de 4 en vista principal)
+        // PROVEEDORES (Límite de 4 en vista principal, ORDENADOS por fecha más cercana)
         const listaP = document.getElementById('lista-proveedores');
         const verMasContP = document.getElementById('contenedor-ver-mas-proveedores');
         listaP.innerHTML = ''; verMasContP.innerHTML = '';
 
-        if(datosApp.proveedores.length === 0) {
+        let proveedoresOrdenados = datosApp.proveedores.map((p, idx) => ({ ...p, originalIndex: idx }));
+        proveedoresOrdenados.sort((a, b) => {
+            if (!a.fechaEntrega && !b.fechaEntrega) return 0;
+            if (!a.fechaEntrega) return 1; // Colocar al final si no tiene fecha
+            if (!b.fechaEntrega) return -1;
+            return new Date(a.fechaEntrega + 'T00:00:00') - new Date(b.fechaEntrega + 'T00:00:00');
+        });
+
+        if(proveedoresOrdenados.length === 0) {
             listaP.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">Sin proveedores.</div>`;
         } else {
-            datosApp.proveedores.slice(0, 4).forEach((p, index) => {
+            proveedoresOrdenados.slice(0, 4).forEach((p) => {
                 let partes = p.fechaEntrega ? p.fechaEntrega.split('-') : [];
                 listaP.innerHTML += `
                     <div class="item-row">
@@ -1055,13 +1107,13 @@
                             <span style="font-weight:600;">${p.nombre}</span>
                             <span style="font-size:12px; color:var(--text-muted);">Deuda: ${formataMoneda(p.saldoPendiente)} • Entrega: ${partes.length>0 ? `${partes[2]}/${partes[1]}/${partes[0]}` : 'Sin fecha'}</span>
                         </div>
-                        <button class="btn-action btn-del" onclick="eliminarProveedor(${index})">🗑️</button>
+                        <button class="btn-action btn-del" onclick="eliminarProveedor(${p.originalIndex})">🗑️</button>
                     </div>
                 `;
             });
 
-            if (datosApp.proveedores.length > 4) {
-                verMasContP.innerHTML = `<button class="btn-ver-mas" onclick="verTodosProveedores()">👁️ Ver todos los Proveedores (${datosApp.proveedores.length})</button>`;
+            if (proveedoresOrdenados.length > 4) {
+                verMasContP.innerHTML = `<button class="btn-ver-mas" onclick="verTodosProveedores()">👁️ Ver todos los Proveedores (${proveedoresOrdenados.length})</button>`;
             }
         }
 
