@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flujo de Caja - Mauro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex justify-center items-center p-2">
+
+    <!-- Contenedor Estilo Celular (Mobile-First) -->
+    <div class="w-full max-w-md bg-slate-900 rounded-3xl shadow-2xl border border-slate-800 overflow-hidden flex flex-col h-[92vh]">
+        
+        <!-- Header Dinámico con Saludo -->
+        <div class="bg-gradient-to-r from-purple-900 via-indigo-900 to-orange-600 p-5 text-white shadow-md relative">
+            <div class="flex justify-between items-center mb-2">
+                <span id="saludo-text" class="text-xs uppercase tracking-wider text-orange-200 font-semibold">Cargando...</span>
+                <span class="bg-orange-500/20 text-orange-400 text-[10px] px-2 py-0.5 rounded-full font-bold">PRO</span>
+            </div>
+            <h1 id="saldo-real" class="text-3xl font-extrabold">$ 0</h1>
+            <p class="text-xs text-purple-200 mt-1">Saldo Real Disponible (Libre de deudas)</p>
+        </div>
+
+        <!-- Cuerpo Desplazable con Secciones -->
+        <div class="p-4 overflow-y-auto space-y-4 flex-1">
+
+            <!-- 🤖 Sección Chat con Bot Analista -->
+            <div class="bg-slate-800/80 p-4 rounded-2xl border border-purple-500/30 shadow-lg">
+                <div class="flex items-center space-x-2 mb-2">
+                    <span class="text-lg">🤖</span>
+                    <h2 class="text-sm font-bold text-purple-300">Chat con Bot Analista</h2>
+                </div>
+                <div id="chat-box" class="bg-slate-900 p-3 rounded-xl text-xs text-slate-300 h-24 overflow-y-auto mb-2 space-y-1 border border-slate-700">
+                    <p class="text-purple-400">Hola Mauro, soy tu auditor financiero. Pregúntame sobre tus gastos o simulaciones de inversión.</p>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="chat-input" placeholder="Ej: ¿Puedo gastar 20 mil en un gusto?" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white focus:outline-none focus:border-purple-500">
+                    <button onclick="enviarAlBot()" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-xl text-xs font-semibold">Enviar</button>
+                </div>
+            </div>
+
+            <!-- 💼 Sección Bolsillos Dinámicos -->
+            <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-sm font-bold text-slate-300">💼 Mis Bolsillos</h2>
+                    <button onclick="agregarBolsillo()" class="text-xs text-orange-400 hover:underline font-semibold">+ Añadir</button>
+                </div>
+                <div id="lista-bolsillos" class="space-y-3">
+                    <!-- Se llena con JavaScript -->
+                </div>
+            </div>
+
+            <!-- 🤝 Sección Deudas y Préstamos -->
+            <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-sm font-bold text-slate-300">🤝 Deudas y Préstamos</h2>
+                    <button onclick="agregarDeuda()" class="text-xs text-orange-400 hover:underline font-semibold">+ Añadir</button>
+                </div>
+                <div id="lista-deudas" class="space-y-2 text-xs">
+                    <!-- Se llena con JavaScript -->
+                </div>
+            </div>
+
+            <!-- 📅 Calendario de Rayos X Financiero -->
+            <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+                <h2 class="text-sm font-bold text-slate-300 mb-2">📅 Calendario Financiero</h2>
+                <div class="grid grid-cols-7 gap-1 text-center text-xs" id="calendario-grid">
+                    <!-- Generado por JS -->
+                </div>
+                <div id="info-dia" class="mt-3 p-2 bg-slate-900 rounded-xl text-xs text-slate-400 border border-slate-700">
+                    Toca un día del calendario para ver el detalle.
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Barra de Navegación Inferior Limpia -->
+        <div class="bg-slate-900 border-t border-slate-800 p-3 flex justify-around text-xs text-slate-400">
+            <button class="text-orange-400 font-semibold flex flex-col items-center"><span>📊</span>Dashboard</button>
+            <button class="hover:text-white flex flex-col items-center" onclick="alert('Sección de Analítica en desarrollo')"><span>📈</span>Analítica</button>
+            <button class="hover:text-white flex flex-col items-center" onclick="alert('Sección de Ajustes en desarrollo')"><span>⚙️</span>Ajustes</button>
+        </div>
+
+    </div>
+
+    <!-- Script de lógica de la aplicación -->
+    <script>
+        let bolsillos = [];
+        let deudas = [];
+
+        function formatearPesos(valor) {
+            return "$ " + Number(valor).toLocaleString('es-CO');
+        }
+
+        function actualizarSaludo() {
+            const hora = new Date().getHours();
+            let saludo = "Buenas Noches, Mauro 🌙";
+            if (hora >= 6 && hora < 12) {
+                saludo = "Buenos Días, Mauro ☀️";
+            } else if (hora >= 12 && hora < 18) {
+                saludo = "Buenas Tardes, Mauro 🌇";
+            }
+            document.getElementById("saludo-text").innerText = saludo;
+        }
+
+        function calcularSaldoReal() {
+            let totalBolsillos = bolsillos.reduce((acc, b) => acc + Number(b.monto), 0);
+            let totalDeudasPorPagar = deudas.filter(d => d.tipo === 'debo').reduce((acc, d) => acc + Number(d.monto), 0);
+            
+            let saldoReal = totalBolsillos - totalDeudasPorPagar;
+            document.getElementById("saldo-real").innerText = formatearPesos(saldoReal);
+        }
+
+        function renderBolsillos() {
+            const contenedor = document.getElementById("lista-bolsillos");
+            contenedor.innerHTML = "";
+            
+            if (bolsillos.length === 0) {
+                contenedor.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-2">No hay bolsillos creados. Pulsa "+ Añadir".</p>`;
+                return;
+            }
+
+            bolsillos.forEach((b, index) => {
+                contenedor.innerHTML += `
+                    <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700 flex justify-between items-center text-xs">
+                        <div>
+                            <p class="font-semibold text-slate-200">${b.nombre}</p>
+                            <p class="text-orange-400 font-bold">${formatearPesos(b.monto)}</p>
+                        </div>
+                        <div class="space-x-2">
+                            <button onclick="editarBolsillo(${index})" class="text-blue-400 hover:underline">Editar</button>
+                            <button onclick="eliminarBolsillo(${index})" class="text-rose-400 hover:underline">Borrar</button>
+                        </div>
+                    </div>`;
+            });
+            calcularSaldoReal();
+        }
+
+        function agregarBolsillo() {
+            let nombre = prompt("Nombre del bolsillo (ej: Arriendo, Comida):");
+            if (!nombre) return;
+            let monto = prompt("Monto inicial en pesos (ej: 150000):", "0");
+            if (isNaN(monto) || monto === null) return;
+            
+            bolsillos.push({ nombre, monto: Number(monto) });
+            renderBolsillos();
+        }
+
+        function editarBolsillo(index) {
+            let nuevoMonto = prompt("Nuevo monto para " + bolsillos[index].nombre + ":", bolsillos[index].monto);
+            if (nuevoMonto !== null && !isNaN(nuevoMonto)) {
+                bolsillos[index].monto = Number(nuevoMonto);
+                renderBolsillos();
+            }
+        }
+
+        function eliminarBolsillo(index) {
+            bolsillos.splice(index, 1);
+            renderBolsillos();
+        }
+
+        function renderDeudas() {
+            const contenedor = document.getElementById("lista-deudas");
+            contenedor.innerHTML = "";
+
+            if (deudas.length === 0) {
+                contenedor.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-2">Lista limpia. Añade deudas o cobros pendientes.</p>`;
+                return;
+            }
+
+            deudas.forEach((d, index) => {
+                let color = d.tipo === 'debo' ? 'text-rose-400' : 'text-emerald-400';
+                let signo = d.tipo === 'debo' ? '-' : '+';
+                contenedor.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                        <div>
+                            <p class="font-semibold ${color}">${d.nombre} (${d.tipo === 'debo' ? 'Debo' : 'Me deben'})</p>
+                            <p class="text-slate-400">Vence: ${d.fecha}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold ${color}">${signo} ${formatearPesos(d.monto)}</span>
+                            <br><button onclick="eliminarDeuda(${index})" class="text-[10px] text-slate-500 hover:underline">Eliminar</button>
+                        </div>
+                    </div>`;
+            });
+            calcularSaldoReal();
+        }
+
+        function agregarDeuda() {
+            let nombre = prompt("Acreedor o deudor (ej: Mamá / Juan):");
+            if (!nombre) return;
+            let tipo = prompt("Escribe 'debo' si lo debes, o 'cobro' si te deben:");
+            if (tipo !== 'debo' && tipo !== 'cobro') {
+                alert("Tipo no válido. Escribe exactamente 'debo' o 'cobro'.");
+                return;
+            }
+            let monto = prompt("Monto en pesos:", "0");
+            if (isNaN(monto) || monto === null) return;
+            let fecha = prompt("Fecha límite (ej: 30 de Julio):", "Próximos días");
+
+            deudas.push({ nombre, tipo: tipo === 'debo' ? 'debo' : 'cobro', monto: Number(monto), fecha });
+            renderDeudas();
+        }
+
+        function eliminarDeuda(index) {
+            deudas.splice(index, 1);
+            renderDeudas();
+        }
+
+        function generarCalendario() {
+            const grid = document.getElementById("calendario-grid");
+            grid.innerHTML = "";
+            
+            const diasSemana = ['L', 'M', 'Mi', 'J', 'V', 'S', 'D'];
+            diasSemana.forEach(d => {
+                grid.innerHTML += `<span class="font-bold text-slate-500">${d}</span>`;
+            });
+
+            for (let i = 1; i <= 30; i++) {
+                let esHoy = i === 22 ? 'bg-orange-500 text-white font-bold' : 'bg-slate-900 text-slate-300 hover:bg-slate-700';
+                grid.innerHTML += `<div onclick="verDetalleDia(${i})" class="p-1.5 rounded-lg cursor-pointer text-xs ${esHoy}">${i}</div>`;
+            }
+        }
+
+        function verDetalleDia(dia) {
+            const info = document.getElementById("info-dia");
+            info.innerHTML = `<strong>Día ${dia} de Julio:</strong> Sin movimientos registrados. Tu saldo proyectado para este día es estable.`;
+        }
+
+        function enviarAlBot() {
+            const input = document.getElementById("chat-input");
+            const chatBox = document.getElementById("chat-box");
+            let texto = input.value.trim();
+            if (!texto) return;
+
+            chatBox.innerHTML += `<p class="text-slate-100"><strong>Tú:</strong> ${texto}</p>`;
+            
+            let respuesta = "Analizando tus bolsillos y deudas... Como auditor te sugiero mantener la prudencia hoy y no tocar tu fondo de supervivencia.";
+            
+            let textoLC = texto.toLowerCase();
+            if (textoLC.includes("gastar") || textoLC.includes("comprar") || textoLC.includes("invertir")) {
+                let totalBolsillos = bolsillos.reduce((acc, b) => acc + Number(b.monto), 0);
+                if (totalBolsillos < 50000) {
+                    respuesta = "⚠️ Alerta de Auditoría: Tus bolsillos están bajos. Si haces este gasto te quedarás sin margen de maniobra para los compromisos de esta semana.";
+                } else {
+                    respuesta = "📊 Análisis de escenario: Tienes liquidez en tus bolsillos, pero recuerda revisar la fecha de tus deudas antes de comprometer ese dinero.";
+                }
+            }
+
+            setTimeout(() => {
+                chatBox.innerHTML += `<p class="text-purple-300"><strong>Bot Analista:</strong> ${respuesta}</p>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 500);
+
+            input.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        window.onload = function() {
+            actualizarSaludo();
+            renderBolsillos();
+            renderDeudas();
+            generarCalendario();
+        };
+    </script>
+</body>
+</html>
