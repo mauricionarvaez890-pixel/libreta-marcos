@@ -1,1 +1,1291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Libreta Digital Inteligente - Gestión de Negocio</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #121214;
+            --bg-surface: #1a1a1e;
+            --bg-card: #26262b;
+            --text-main: #ffffff;
+            --text-muted: #a0a0aa;
+            --accent: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #2d2d34;
+            --val-nequi-color: #818cf8;
+        }
 
+        /* Estilos optimizados para el Modo Claro */
+        body.light-mode {
+            --bg-primary: #f4f4f5;
+            --bg-surface: #ffffff;
+            --bg-card: #e4e4e7;
+            --text-main: #18181b;
+            --text-muted: #71717a;
+            --accent: #2563eb;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --border: #e4e4e7;
+            --val-nequi-color: #4338ca;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: var(--bg-primary); color: var(--text-main); padding: 20px; min-height: 100vh; position: relative; overflow-x: hidden; transition: background-color 0.3s, color 0.3s; }
+        .container { max-width: 600px; margin: 0 auto; }
+        
+        header { position: relative; text-align: center; margin-bottom: 15px; padding: 15px 60px; background: var(--bg-surface); border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; }
+        header h1 { font-size: 20px; font-weight: 700; color: var(--text-main); text-align: center; }
+        header p { font-size: 13px; color: var(--text-muted); text-align: center; }
+
+        .theme-toggle { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 22px; background: none; border: none; cursor: pointer; padding: 5px; z-index: 10; }
+        .menu-hamburger { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 26px; background: none; border: none; color: var(--text-main); cursor: pointer; padding: 5px; z-index: 10; }
+
+        /* Panel Lateral (Sidebar Desplegable) */
+        .sidebar { position: fixed; top: 0; right: -100%; width: 100%; max-width: 450px; height: 100vh; background: var(--bg-surface); box-shadow: -5px 0 25px rgba(0,0,0,0.4); z-index: 100; transition: right 0.3s ease; padding: 20px; display: flex; flex-direction: column; border-left: 1px solid var(--border); }
+        .sidebar.open { right: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .sidebar-header h2 { font-size: 18px; font-weight: 700; }
+        .btn-close-sidebar { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; }
+        .sidebar-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; padding-right: 5px; }
+
+        .backup-section { display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; }
+        .btn-backup { padding: 10px 14px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; border: none; flex: 1; display: flex; justify-content: center; align-items: center; gap: 5px; }
+        .btn-backup.export { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--success); color: var(--success); }
+        .btn-backup.import { background: rgba(37, 99, 235, 0.15); border: 1px solid var(--accent); color: var(--accent); }
+
+        .alert-box { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); border-radius: 14px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .alert-title { font-size: 14px; font-weight: 600; color: var(--warning); }
+        .alert-text { font-size: 18px; font-weight: 700; color: var(--text-main); }
+        .alert-btn { background: var(--warning); color: #000; border: none; padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; align-self: flex-start; }
+
+        .section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+        .sub-resumen { font-size: 12px; font-weight: 400; color: var(--text-muted); background: rgba(128,128,128,0.1); padding: 2px 8px; border-radius: 20px; }
+        
+        .card { background: var(--bg-surface); border-radius: 16px; padding: 20px; border: 1px solid var(--border); margin-bottom: 25px; }
+        
+        .search-container { position: relative; margin-bottom: 15px; }
+        .search-input { width: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px 10px 38px; color: var(--text-main); font-size: 14px; outline: none; }
+        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
+        
+        .filter-tabs { display: flex; gap: 8px; margin-bottom: 15px; }
+        .filter-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 14px; font-size: 12px; font-weight: 500; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+        .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        .cierre-display-grande { background: var(--bg-card); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; border: 1px solid var(--border); }
+        .cierre-display-grande .titulo-central { font-size: 15px; color: var(--text-muted); font-weight: 500; margin-bottom: 5px; }
+        .cierre-display-grande .monto-central { font-size: 36px; font-weight: 700; color: var(--success); margin-bottom: 15px; }
+        
+        .desglose-metodos { display: flex; justify-content: space-around; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        body:not(.light-mode) .desglose-metodos { background: rgba(0,0,0,0.2); }
+        .metodo-item { font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
+        .metodo-item span:first-child { color: var(--text-muted); font-size: 11px; }
+        .metodo-item .val-efec { color: var(--text-main); font-weight: 600; }
+        .metodo-item .val-nequi { color: var(--val-nequi-color); font-weight: 600; }
+
+        .btn-close-day { width: 100%; background: rgba(245, 158, 11, 0.12); border: 1px dashed var(--warning); color: var(--warning); padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+
+        .cierre-input { width: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: var(--text-main); font-size: 16px; font-weight: 600; margin-bottom: 12px; outline: none; text-align: center; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-quick { border: none; padding: 12px; font-size: 13px; font-weight: 600; border-radius: 10px; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-quick.in-efec { background: #15803d; }
+        .btn-quick.in-neq { background: #4338ca; }
+        .btn-quick.out-egr { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); grid-column: span 2; }
+
+        .fiados-list, .proveedores-list, .history-box-list, .articulos-list { display: flex; flex-direction: column; gap: 12px; }
+        .item-row { background: var(--bg-card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        
+        .info-col { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .item-name { font-weight: 600; font-size: 15px; cursor: pointer; text-decoration: underline; color: var(--text-main); transition: color 0.2s; }
+        .item-name:hover { color: var(--accent); }
+        .item-subtext { font-size: 11px; color: var(--text-muted); }
+        .edit-badge { font-size: 10px; background: rgba(128,128,128,0.2); color: var(--text-muted); padding: 2px 6px; border-radius: 20px; cursor: pointer; }
+        .margin-badge { font-size: 10px; font-weight:600; background: rgba(16,185,129,0.15); color: var(--success); padding: 2px 6px; border-radius: 4px; }
+        
+        .item-monto { font-size: 18px; font-weight: 700; }
+        .monto-deuda { color: var(--danger); }
+        
+        .actions-row { display: flex; gap: 6px; align-items: center; }
+        .btn-action { border: none; padding: 8px 10px; font-size: 13px; font-weight: 500; border-radius: 8px; cursor: pointer; }
+        .btn-pay { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .btn-add-more { background: rgba(37, 99, 235, 0.15); color: var(--accent); }
+        .btn-del { background: rgba(239, 68, 116, 0.15); color: var(--danger); font-size: 14px; }
+        .btn-cart { background: rgba(245, 158, 11, 0.15); color: var(--warning); font-size: 14px; border: none; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+        .btn-cart.active { background: var(--warning); color: #000; }
+        
+        .btn-ver-mas { width: 100%; margin-top: 10px; background: rgba(128,128,128,0.05); border: 1px dashed var(--border); padding: 10px; border-radius: 10px; color: var(--text-muted); font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; }
+
+        .historial-tabla { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; color: var(--text-main); }
+        .historial-tabla th, .historial-tabla td { padding: 8px; text-align: left; border-bottom: 1px solid var(--border); }
+        .historial-tabla th { color: var(--text-muted); font-weight: 500; }
+        .txt-fiado { color: var(--danger); font-weight: 600; }
+        .txt-abono { color: var(--success); font-weight: 600; }
+
+        .caja-faltantes { background: rgba(128,128,128,0.05); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-top: 10px; }
+        .totales-faltantes { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 13px; }
+
+        /* MODAL GLOBAL INDEPENDIENTE */
+        #modal-global { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; padding: 20px; }
+        .modal-content { background: var(--bg-surface); width: 100%; max-width: 520px; padding: 25px; border-radius: 20px; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
+        .modal-close { background:none; border:none; color:var(--text-muted); font-size:28px; cursor:pointer; }
+
+        /* PANTALLA DE BLOQUEO DIARIO */
+        #lock-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121214; z-index: 99999; align-items: center; justify-content: center; flex-direction: column; color: white; padding: 20px; }
+        .keypad-container { width: 100%; max-width: 320px; text-align: center; }
+        .keypad-btn { background: #1a1a1e; border: 1px solid #2d2d34; color: white; font-size: 20px; font-weight: 600; padding: 15px; border-radius: 12px; cursor: pointer; transition: background 0.1s, transform 0.1s; display: flex; align-items: center; justify-content: center; user-select: none; }
+        .keypad-btn:active { background: var(--accent); color: white; transform: scale(0.95); }
+    </style>
+</head>
+<body>
+
+<!-- PANTALLA DE BLOQUEO DIARIO (0000) -->
+<div id="lock-screen">
+    <div class="keypad-container">
+        <div style="font-size:50px; margin-bottom:15px;">🔒</div>
+        <h2 style="font-size:22px; font-weight:700; margin-bottom:5px;">Libreta Protegida</h2>
+        <p style="font-size:13px; color:#a0a0aa; margin-bottom:30px;">Ingrese el PIN de acceso diario</p>
+        
+        <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" readonly style="width:100%; text-align:center; font-size:32px; letter-spacing:10px; background:#1a1a1e; border:1px solid #2d2d34; border-radius:12px; padding:12px; color:white; outline:none; margin-bottom:25px; box-shadow:inset 0 2px 4px rgba(0,0,0,0.5);">
+        
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:20px;">
+            <button class="keypad-btn" onclick="addPinDigit('1')">1</button>
+            <button class="keypad-btn" onclick="addPinDigit('2')">2</button>
+            <button class="keypad-btn" onclick="addPinDigit('3')">3</button>
+            <button class="keypad-btn" onclick="addPinDigit('4')">4</button>
+            <button class="keypad-btn" onclick="addPinDigit('5')">5</button>
+            <button class="keypad-btn" onclick="addPinDigit('6')">6</button>
+            <button class="keypad-btn" onclick="addPinDigit('7')">7</button>
+            <button class="keypad-btn" onclick="addPinDigit('8')">8</button>
+            <button class="keypad-btn" onclick="addPinDigit('9')">9</button>
+            <button class="keypad-btn" onclick="clearPinDigit()" style="color:var(--danger); font-weight:600;">⌫</button>
+            <button class="keypad-btn" onclick="addPinDigit('0')">0</button>
+            <button class="keypad-btn" onclick="clearAllPin()" style="color:#a0a0aa; font-size:12px;">Limpiar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL GLOBAL -->
+<div id="modal-global">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-titulo" class="modal-title">Detalle</h2>
+            <button class="modal-close" onclick="cerrarModalGlobal()">×</button>
+        </div>
+        <div id="modal-contenido"></div>
+    </div>
+</div>
+
+<!-- PANEL LATERAL ☰ (DICCIONARIO Y COMPRAS) -->
+<div class="sidebar" id="sidebar-articulos">
+    <div class="sidebar-header">
+        <h2>📦 Diccionario de Artículos</h2>
+        <button class="btn-close-sidebar" onclick="conmutarSidebar()">×</button>
+    </div>
+    
+    <div class="sidebar-content">
+        <div>
+            <button onclick="nuevoArticulo()" style="width:100%; background:var(--accent); border:none; color:#fff; padding:10px; font-weight:600; border-radius:10px; cursor:pointer; margin-bottom:15px;">+ Registrar Nuevo Artículo</button>
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="busqueda-articulo" class="search-input" placeholder="Buscar artículo por nombre..." oninput="actualizarPantalla()">
+            </div>
+            <div class="articulos-list" id="lista-articulos"></div>
+            <div id="ver-mas-articulos-btn-cont"></div>
+        </div>
+
+        <div>
+            <div class="section-title">📝 Lista de Faltantes (Pedido)</div>
+            <div class="caja-faltantes">
+                <div id="lista-items-faltantes" style="font-size:13px; color:var(--text-muted); display:flex; flex-direction:column; gap:6px;">
+                    Ningún artículo marcado como faltante.
+                </div>
+                <div class="totales-faltantes">
+                    <div>Inversión estimada: <strong id="total-costo-faltantes" style="color:var(--warning); font-size:15px;">$0</strong></div>
+                    <button onclick="reiniciarFaltantes()" style="background:none; border:none; color:var(--danger); font-weight:600; cursor:pointer; font-size:12px;">🔄 Reiniciar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <header>
+        <button class="theme-toggle" id="btn-tema" onclick="conmutarTema()">🌙</button>
+        <h1>Libreta Digital de Ventas</h1>
+        <p>Marcos Fuentes • Gestión de Negocio</p>
+        <button class="menu-hamburger" onclick="conmutarSidebar()">☰</button>
+    </header>
+
+    <div class="backup-section">
+        <button class="btn-backup export" onclick="exportarDatos()">💾 Descargar Copia</button>
+        <button class="btn-backup import" onclick="importarDatos()">📂 Restaurar Copia</button>
+    </div>
+
+    <div id="contenedor-recordatorios"></div>
+
+    <div class="section-title">📊 Cierre de Caja Diario</div>
+    <div class="card">
+        <div class="cierre-display-grande">
+            <div class="titulo-central">Total Neto Hoy (Ventas - Egresos)</div>
+            <div class="monto-central" id="caja-total">$0</div>
+            
+            <div class="desglose-metodos">
+                <div class="metodo-item">
+                    <span>💵 En Efectivo</span>
+                    <span class="val-efec" id="caja-efectivo">$0</span>
+                </div>
+                <div class="metodo-item">
+                    <span>📱 En Nequi</span>
+                    <span class="val-nequi" id="caja-nequi">$0</span>
+                </div>
+                <div class="metodo-item">
+                    <span>📉 Egresos</span>
+                    <span style="color:var(--danger); font-weight:600;" id="caja-egresos">$0</span>
+                </div>
+            </div>
+
+            <button class="btn-close-day" onclick="ejecutarCierreDeCaja()">🔒 Cerrar Caja de Hoy y Reiniciar</button>
+        </div>
+        
+        <input type="text" inputmode="numeric" id="cierre-monto-input" class="cierre-input" placeholder="Digite el monto de venta" oninput="limpiarYFormatearInput(this)">
+        
+        <div class="btn-grid">
+            <button class="btn-quick in-efec" onclick="registrarMovimiento('ingreso', 'efectivo')">➕ Venta Efectivo</button>
+            <button class="btn-quick in-neq" onclick="registrarMovimiento('ingreso', 'nequi')">➕ Venta Nequi</button>
+            <button class="btn-quick out-egr" onclick="registrarGastoEgreso()">➖ Registrar Egreso / Gasto</button>
+        </div>
+    </div>
+
+    <div class="section-title">
+        <span>👥 Personas que Deben <span id="resumen-fiados" class="sub-resumen">$0</span></span>
+        <button onclick="nuevoCliente()" style="background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer; font-size:14px;">+ Nuevo Cliente</button>
+    </div>
+    <div class="card">
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="busqueda-cliente" class="search-input" placeholder="Buscar cliente por nombre..." oninput="actualizarPantalla()">
+        </div>
+
+        <div class="filter-tabs">
+            <button id="filtro-todos" class="filter-btn active" onclick="cambiarFiltroClientes('todos')">Todos</button>
+            <button id="filtro-deudores" class="filter-btn" onclick="cambiarFiltroClientes('deudores')">Solo Deudores</button>
+        </div>
+        
+        <div class="fiados-list" id="lista-fiados"></div>
+        <div id="contenedor-ver-mas-clientes"></div>
+    </div>
+
+    <div class="section-title">📅 Historial de Cierres Diarios</div>
+    <div class="card">
+        <div class="history-box-list" id="lista-cierres-historicos"></div>
+        <div id="contenedor-ver-mas-cierres"></div>
+    </div>
+
+    <div class="section-title">
+        <span>🚚 Estado de Proveedores (Próximos Primero)</span>
+        <button onclick="nuevoProveedorFlujoRapido()" style="background:none; border:none; color:var(--warning); font-weight:600; cursor:pointer; font-size:14px;">+ Nuevo Proveedor</button>
+    </div>
+    <div class="card">
+        <div class="proveedores-list" id="lista-proveedores"></div>
+        <div id="contenedor-ver-mas-proveedores"></div>
+    </div>
+</div>
+
+<script>
+    let datosApp = {
+        cierreEfectivo: 0,
+        cierreNequi: 0,
+        cierreEgresos: 0,
+        listaEgresosHoy: [], // NUEVO: Guardará los detalles de los gastos del día
+        clientes: [],
+        proveedores: [],
+        recordatorios: [],
+        historialCierres: [],
+        articulos: [],
+        temaClaro: false
+    };
+
+    let filtroClienteActual = 'todos';
+    let pinActual = "";
+
+    // CARGA DE DATOS SEGUROS
+    if (localStorage.getItem('libreta_inteligente_v8')) {
+        datosApp = JSON.parse(localStorage.getItem('libreta_inteligente_v8'));
+        // Validar integridad de nuevos campos
+        if (!datosApp.cierreEgresos) datosApp.cierreEgresos = 0;
+        if (!datosApp.articulos) datosApp.articulos = [];
+        if (!datosApp.listaEgresosHoy) datosApp.listaEgresosHoy = [];
+    }
+
+    function guardar() {
+        localStorage.setItem('libreta_inteligente_v8', JSON.stringify(datosApp));
+    }
+
+    // FORMATEADOR ESTRICTO COLOMBIANO CON PESOS ($ 2.000)
+    function formataMoneda(valor) {
+        return '$ ' + Math.round(valor || 0).toLocaleString('es-CO');
+    }
+
+    // FORMATEA EL INPUT CON $ Y PUNTOS EN TIEMPO REAL
+    function limpiarYFormatearInput(inputElement) {
+        let val = inputElement.value.replace(/\D/g, "");
+        if(val !== "") {
+            inputElement.value = '$ ' + parseInt(val, 10).toLocaleString('es-CO');
+        } else {
+            inputElement.value = "";
+        }
+    }
+
+    // CONVIERTE TEXTO FORMATEADO A NÚMERO SEGURO
+    function procesarMontoFormateado(texto) {
+        if(!texto) return 0;
+        let limpio = texto.replace(/\D/g, "");
+        return parseFloat(limpio) || 0;
+    }
+
+    // LÓGICA DE BLOQUEO DE ACCESO POR DÍA (PIN 0000)
+    function addPinDigit(digit) {
+        if (pinActual.length < 4) {
+            pinActual += digit;
+            document.getElementById('pin-input').value = "•".repeat(pinActual.length);
+            
+            if (pinActual === "0000") {
+                const hoyStr = new Date().toDateString();
+                localStorage.setItem('libreta_ultima_sesion_dia', hoyStr);
+                setTimeout(() => {
+                    document.getElementById('lock-screen').style.display = 'none';
+                    pinActual = "";
+                    document.getElementById('pin-input').value = "";
+                }, 200);
+            } else if (pinActual.length === 4) {
+                Swal.fire({ title: 'PIN Incorrecto', text: 'El código ingresado no es válido.', icon: 'error', timer: 1500, showConfirmButton: false });
+                clearAllPin();
+            }
+        }
+    }
+
+    function clearPinDigit() {
+        if (pinActual.length > 0) {
+            pinActual = pinActual.slice(0, -1);
+            document.getElementById('pin-input').value = "•".repeat(pinActual.length);
+        }
+    }
+
+    function clearAllPin() {
+        pinActual = "";
+        document.getElementById('pin-input').value = "";
+    }
+
+    function verificarBloqueoSeguridad() {
+        const hoyStr = new Date().toDateString();
+        const ultimaSesion = localStorage.getItem('libreta_ultima_sesion_dia');
+        if (ultimaSesion !== hoyStr) {
+            document.getElementById('lock-screen').style.display = 'flex';
+            clearAllPin();
+        } else {
+            document.getElementById('lock-screen').style.display = 'none';
+        }
+    }
+
+    // Escuchar teclado físico para PIN
+    window.addEventListener('keydown', (e) => {
+        const lockScreen = document.getElementById('lock-screen');
+        if (lockScreen && lockScreen.style.display === 'flex') {
+            if (e.key >= '0' && e.key <= '9') {
+                addPinDigit(e.key);
+            } else if (e.key === 'Backspace') {
+                clearPinDigit();
+            }
+        }
+    });
+
+    // SISTEMA DE VENTANA MODAL GLOBAL
+    function abrirModalGlobal(titulo, htmlContenido) {
+        document.getElementById('modal-titulo').innerText = titulo;
+        document.getElementById('modal-contenido').innerHTML = htmlContenido;
+        document.getElementById('modal-global').style.display = 'flex';
+    }
+
+    function cerrarModalGlobal() {
+        document.getElementById('modal-global').style.display = 'none';
+    }
+
+    // TEMAS Y SIDEBAR
+    function conmutarTema() {
+        datosApp.temaClaro = !datosApp.temaClaro;
+        guardar();
+        aplicarTemaVisual();
+    }
+
+    function aplicarTemaVisual() {
+        const btn = document.getElementById('btn-tema');
+        if (datosApp.temaClaro) {
+            document.body.classList.add('light-mode');
+            btn.innerText = '☀️';
+        } else {
+            document.body.classList.remove('light-mode');
+            btn.innerText = '🌙';
+        }
+    }
+
+    function conmutarSidebar() {
+        document.getElementById('sidebar-articulos').classList.toggle('open');
+    }
+
+    function obtenerFechaHoraActual() {
+        const d = new Date();
+        const fecha = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+        let minutos = d.getMinutes();
+        if (minutos < 10) minutos = '0' + minutos;
+        return { fecha, completa: `${fecha} a las ${d.getHours()}:${minutos}` };
+    }
+
+    // RESPALDOS
+    function exportarDatos() {
+        const dataStr = JSON.stringify(datosApp);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `Copia_Libreta.json`; a.click();
+    }
+
+    function importarDatos() {
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const parsed = JSON.parse(event.target.result);
+                    // NUEVA VALIDACIÓN: Confirmar que es el JSON correcto de nuestra app
+                    if(parsed && typeof parsed === 'object' && Array.isArray(parsed.clientes) && Array.isArray(parsed.historialCierres)) {
+                        datosApp = parsed;
+                        if(!datosApp.articulos) datosApp.articulos = [];
+                        if(!datosApp.cierreEgresos) datosApp.cierreEgresos = 0;
+                        if(!datosApp.listaEgresosHoy) datosApp.listaEgresosHoy = [];
+                        
+                        guardar(); aplicarTemaVisual(); actualizarPantalla(); renderRecordatorios();
+                        Swal.fire({ title: 'Éxito', text: 'Datos cargados correctamente', icon: 'success', background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
+                    } else {
+                        throw new Error("Estructura de JSON inválida");
+                    }
+                } catch(err) {
+                    Swal.fire({ title: 'Error', text: 'El archivo subido no es válido o está corrupto.', icon: 'error', background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    // REGISTRO DE VENTAS Y CONTABILIDAD
+    function registrarMovimiento(tipo, metodo) {
+        const montoInput = document.getElementById('cierre-monto-input');
+        const monto = procesarMontoFormateado(montoInput.value);
+        if (isNaN(monto) || monto <= 0) return;
+        datosApp[metodo === 'efectivo' ? 'cierreEfectivo' : 'cierreNequi'] += monto;
+        montoInput.value = ''; guardar(); actualizarPantalla();
+    }
+
+    // REGISTRO DE GASTO INTELIGENTE (Detecta si ya escribiste el valor arriba)
+    function registrarGastoEgreso() {
+        const montoInput = document.getElementById('cierre-monto-input');
+        const montoDetectado = procesarMontoFormateado(montoInput.value);
+
+        if (montoDetectado > 0) {
+            Swal.fire({
+                title: 'Descripción del Egreso / Gasto',
+                text: `Valor registrado: ${formataMoneda(montoDetectado)}`,
+                input: 'text',
+                inputPlaceholder: 'Ej. Bolsas, Pago de luz, Arroz proveedor...',
+                background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
+                showCancelButton: true,
+                confirmButtonText: 'Registrar Egreso',
+                preConfirm: (desc) => {
+                    if (!desc || desc.trim() === "") {
+                        Swal.showValidationMessage('La descripción es requerida');
+                        return false;
+                    }
+                    return desc.trim();
+                }
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    datosApp.cierreEgresos += montoDetectado;
+                    
+                    // NUEVO: Guardar la descripción en la lista del día
+                    if (!datosApp.listaEgresosHoy) datosApp.listaEgresosHoy = [];
+                    datosApp.listaEgresosHoy.push({ descripcion: res.value, monto: montoDetectado }); 
+                    
+                    montoInput.value = ''; 
+                    guardar(); actualizarPantalla();
+                    Swal.fire({ title: 'Éxito', text: `Gasto por ${formataMoneda(montoDetectado)} (${res.value}) registrado`, icon: 'success', timer: 1500, showConfirmButton: false, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
+                }
+            });
+        } else {
+            Swal.fire({
+                title: 'Registrar Egreso / Gasto',
+                background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
+                html: `
+                    <input id="egr-desc" class="swal2-input" placeholder="Descripción (Ej. Bolsa, Gasto Luz)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
+                    <input id="egr-monto" type="text" class="swal2-input" placeholder="Monto ($)" style="background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Registrar',
+                preConfirm: () => {
+                    const desc = document.getElementById('egr-desc').value.trim();
+                    const monto = procesarMontoFormateado(document.getElementById('egr-monto').value);
+                    if (!desc || monto <= 0) {
+                        Swal.showValidationMessage('La descripción y el monto son requeridos');
+                        return false;
+                    }
+                    return { desc, monto };
+                }
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    datosApp.cierreEgresos += res.value.monto;
+                    
+                    // NUEVO: Guardar la descripción en la lista del día
+                    if (!datosApp.listaEgresosHoy) datosApp.listaEgresosHoy = [];
+                    datosApp.listaEgresosHoy.push({ descripcion: res.value.desc, monto: res.value.monto });
+                    
+                    guardar(); actualizarPantalla();
+                    Swal.fire({ title: 'Éxito', text: `Gasto por ${formataMoneda(res.value.monto)} registrado`, icon: 'success', timer: 1500, showConfirmButton: false, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
+                }
+            });
+        }
+    }
+
+    function ejecutarCierreDeCaja() {
+        const ingresosHoy = datosApp.cierreEfectivo + datosApp.cierreNequi;
+        const egresosHoy = datosApp.cierreEgresos || 0;
+        const netoHoy = ingresosHoy - egresosHoy;
+
+        if(ingresosHoy === 0 && egresosHoy === 0) {
+            Swal.fire({ title: 'Caja Vacía', text: 'No hay movimientos el día de hoy.', icon: 'info', background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' });
+            return;
+        }
+
+        Swal.fire({
+            title: '¿Confirmar Cierre Total?',
+            background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
+            html: `
+                <div style="text-align: left; padding: 10px; background: rgba(128,128,128,0.05); border-radius: 10px; font-size:14px; line-height:1.6;">
+                    <div>🟢 Ingresos: <strong>${formataMoneda(ingresosHoy)}</strong></div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-left: 15px;">- Efectivo: ${formataMoneda(datosApp.cierreEfectivo)}</div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-left: 15px;">- Nequi: ${formataMoneda(datosApp.cierreNequi)}</div>
+                    <div style="color:var(--danger);">🔴 Egresos: <strong>${formataMoneda(egresosHoy)}</strong></div>
+                    <hr style="border:0; border-top:1px dashed var(--border); margin:8px 0;">
+                    <div style="font-size: 16px;">🔵 Ganancia Neta: <strong style="color:var(--success);">${formataMoneda(netoHoy)}</strong></div>
+                </div>
+                <p style="margin-top:15px; font-size:13px;">Escriba la palabra "CERRAR" para archivar este día:</p>
+            `,
+            input: 'text',
+            showCancelButton: true,
+            confirmButtonText: 'Archivar y Reiniciar',
+            cancelButtonText: 'Cancelar',
+            preConfirm: (value) => {
+                if (value !== 'CERRAR') {
+                    Swal.showValidationMessage('Debe escribir exactamente "CERRAR"');
+                    return false;
+                }
+                return true;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const tiempo = obtenerFechaHoraActual();
+                if(!datosApp.historialCierres) datosApp.historialCierres = [];
+                
+                // NUEVO: Guardamos la lista de egresos en el historial
+                datosApp.historialCierres.unshift({ 
+                    fecha: tiempo.fecha, 
+                    efectivo: datosApp.cierreEfectivo, 
+                    nequi: datosApp.cierreNequi, 
+                    egresos: egresosHoy, 
+                    detalleEgresos: datosApp.listaEgresosHoy || [], 
+                    total: netoHoy 
+                });
+                
+                datosApp.cierreEfectivo = 0; datosApp.cierreNequi = 0; datosApp.cierreEgresos = 0;
+                datosApp.listaEgresosHoy = []; // Limpiamos para el próximo día
+                
+                guardar(); actualizarPantalla();
+            }
+        });
+    }
+
+    function eliminarCierreHistorico(index, isModalOpen = false) {
+        Swal.fire({ title: '¿Borrar registro?', icon: 'warning', showCancelButton: true, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' }).then((result) => {
+            if (result.isConfirmed) { 
+                datosApp.historialCierres.splice(index, 1); 
+                guardar(); 
+                actualizarPantalla();
+                if (isModalOpen) verTodosCierres();
+            }
+        });
+    }
+
+    // NUEVO: Ver detalles de los gastos guardados en el historial
+    function verDetalleGastosHistorico(indexCierre) {
+        const cierre = datosApp.historialCierres[indexCierre];
+        const gastos = cierre.detalleEgresos || [];
+
+        if (gastos.length === 0) {
+            Swal.fire({ 
+                title: 'Sin detalles', 
+                text: 'No hay descripciones de gastos para este día o es un registro de una versión anterior.', 
+                icon: 'info', 
+                background: datosApp.temaClaro ? '#fff' : '#1a1a1e', 
+                color: datosApp.temaClaro ? '#000' : '#fff' 
+            });
+            return;
+        }
+
+        let htmlGastos = '<div style="text-align: left; display: flex; flex-direction: column; gap: 10px;">';
+        gastos.forEach(g => {
+            htmlGastos += `
+                <div style="background: var(--bg-card); padding: 10px; border-radius: 8px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 14px;">📝 ${g.descripcion}</span>
+                    <span style="color: var(--danger); font-weight: 700;">${formataMoneda(g.monto)}</span>
+                </div>`;
+        });
+        htmlGastos += '</div>';
+
+        abrirModalGlobal(`Gastos del ${cierre.fecha}`, htmlGastos);
+    }
+
+    // DICCIONARIO DE ARTÍCULOS
+    function nuevoArticulo() {
+        Swal.fire({
+            title: 'Nuevo Artículo',
+            background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
+            html: `
+                <input id="art-nombre" class="swal2-input" placeholder="Nombre y Medida" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
+                <input id="art-costo" type="text" class="swal2-input" placeholder="Precio de Costo ($)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
+                <input id="art-venta" type="text" class="swal2-input" placeholder="Precio de Venta ($)" style="background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Guardar',
+            preConfirm: () => {
+                const nombre = document.getElementById('art-nombre').value.trim();
+                const costo = procesarMontoFormateado(document.getElementById('art-costo').value);
+                const venta = procesarMontoFormateado(document.getElementById('art-venta').value);
+                if(!nombre || venta <= 0) { Swal.showValidationMessage('El nombre y precio de venta son obligatorios'); return false; }
+                return { nombre, costo, venta, faltante: false, cantidadPedir: 0, ultimoSurtido: Date.now() };
+            }
+        }).then((res) => {
+            if (res.isConfirmed) {
+                datosApp.articulos.push(res.value);
+                guardar(); actualizarPantalla();
+            }
+        });
+    }
+
+    function editarArticulo(index, isModalOpen = false) {
+        const a = datosApp.articulos[index];
+        Swal.fire({
+            title: 'Editar Artículo',
+            background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
+            html: `
+                <input id="edit-art-nombre" class="swal2-input" value="${a.nombre}" placeholder="Nombre y Medida" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
+                <input id="edit-art-costo" type="text" class="swal2-input" value="$ ${a.costo.toLocaleString('es-CO')}" placeholder="Precio de Costo ($)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
+                <input id="edit-art-venta" type="text" class="swal2-input" value="$ ${a.venta.toLocaleString('es-CO')}" placeholder="Precio de Venta ($)" style="background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Guardar Cambios',
+            preConfirm: () => {
+                const nombre = document.getElementById('edit-art-nombre').value.trim();
+                const costo = procesarMontoFormateado(document.getElementById('edit-art-costo').value);
+                const venta = procesarMontoFormateado(document.getElementById('edit-art-venta').value);
+                if(!nombre || venta <= 0) { Swal.showValidationMessage('El nombre y precio de venta son requeridos'); return false; }
+                return { nombre, costo, venta };
+            }
+        }).then((res) => {
+            if (res.isConfirmed) {
+                a.nombre = res.value.nombre;
+                a.costo = res.value.costo;
+                a.venta = res.value.venta;
+                a.ultimoSurtido = Date.now();
+                guardar(); actualizarPantalla();
+                if (isModalOpen) verTodosArticulos();
+            }
+        });
+    }
+
+    function conmutarFaltante(index, isModalOpen = false) {
+        const a = datosApp.articulos[index];
+        if(!a.faltante) {
+            Swal.fire({
+                title: 'Cantidad a pedir',
+                text: `¿Cuántas unidades de "${a.nombre}" vas a pedir?`,
+                input: 'number',
+                inputValue: '1',
+                background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
+                inputAttributes: { min: '1', step: '1' },
+                showCancelButton: true,
+                confirmButtonText: 'Marcar',
+                preConfirm: (value) => {
+                    const cant = parseInt(value, 10);
+                    if (isNaN(cant) || cant <= 0) {
+                        Swal.showValidationMessage('Ingrese un valor mayor que 0');
+                        return false;
+                    }
+                    return cant;
+                }
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    a.faltante = true;
+                    a.cantidadPedir = res.value;
+                    a.ultimoSurtido = Date.now();
+                    guardar(); actualizarPantalla();
+                    if (isModalOpen) verTodosArticulos();
+                }
+            });
+        } else {
+            a.faltante = false;
+            a.cantidadPedir = 0;
+            guardar(); actualizarPantalla();
+            if (isModalOpen) verTodosArticulos();
+        }
+    }
+
+    function reiniciarFaltantes() {
+        Swal.fire({ title: '¿Limpiar lista?', text: 'Se desmarcarán todos los faltantes.', icon: 'warning', showCancelButton: true, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' }).then((res) => {
+            if(res.isConfirmed) {
+                datosApp.articulos.forEach(a => { a.faltante = false; a.cantidadPedir = 0; });
+                guardar(); actualizarPantalla();
+            }
+        });
+    }
+
+    function eliminarArticulo(index, isModalOpen = false) {
+        Swal.fire({ title: '¿Eliminar artículo?', icon: 'warning', showCancelButton: true, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' }).then((res) => {
+            if(res.isConfirmed) {
+                datosApp.articulos.splice(index, 1);
+                guardar(); actualizarPantalla();
+                if (isModalOpen) verTodosArticulos();
+            }
+        });
+    }
+
+    function verTodosArticulos() {
+        let html = `
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="busqueda-articulo-modal" class="search-input" placeholder="Buscar artículo..." oninput="filtrarArticulosModal()" style="margin-bottom: 15px;">
+            </div>
+            <div class="articulos-list" id="lista-articulos-modal" style="max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
+        `;
+        abrirModalGlobal('Diccionario de Artículos', html);
+        filtrarArticulosModal();
+    }
+
+    function filtrarArticulosModal() {
+        const query = document.getElementById('busqueda-articulo-modal').value.toLowerCase().trim();
+        const listDiv = document.getElementById('lista-articulos-modal');
+        listDiv.innerHTML = '';
+        const unMesEnMs = 30 * 24 * 60 * 60 * 1000;
+
+        datosApp.articulos.forEach((a, index) => {
+            if (query === '' || a.nombre.toLowerCase().includes(query)) {
+                let margen = 0;
+                if(a.venta > a.costo && a.costo > 0) { margen = Math.round(((a.venta - a.costo) / a.venta) * 100); }
+                const sinSurtir = (Date.now() - (a.ultimoSurtido || Date.now())) > unMesEnMs;
+
+                listDiv.innerHTML += `
+                    <div class="item-row" style="padding:10px; margin-bottom:0;">
+                        <div class="info-col">
+                            <div class="name-row">
+                                <span style="font-weight:600; font-size:14px;">${a.nombre}</span>
+                                ${margen > 0 ? `<span class="margin-badge">Ganancia: ${margen}%</span>` : ''}
+                                ${sinSurtir ? `<span style="font-size:9px; font-weight:600; background:rgba(239,68,68,0.15); color:var(--danger); padding:2px 6px; border-radius:4px;">⚠️ Sin surtir hace +1 mes</span>` : ''}
+                            </div>
+                            <span style="font-size:11px; color:var(--text-muted);">Costo: ${formataMoneda(a.costo)} | Venta: <strong>${formataMoneda(a.venta)}</strong></span>
+                        </div>
+                        <div class="actions-row">
+                            <button class="btn-cart ${a.faltante ? 'active' : ''}" onclick="conmutarFaltante(${index}, true)">🛒</button>
+                            <button class="btn-action btn-add-more" style="padding:5px 8px;" onclick="editarArticulo(${index}, true)">✏️</button>
+                            <button class="btn-action btn-del" style="padding:5px 8px;" onclick="eliminarArticulo(${index}, true)">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    // PROVEEDORES ORDENADOS POR FECHA (MÁS PRÓXIMA PRIMERO)
+    function nuevoProveedorFlujoRapido() {
+        Swal.fire({
+            title: 'Nuevo Proveedor',
+            background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
+            html: `
+                <input id="prov-nombre" class="swal2-input" placeholder="Nombre" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
+                <input id="prov-monto" type="text" class="swal2-input" placeholder="Monto Deuda ($)" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
+                <input id="prov-fecha" type="date" class="swal2-input" style="background:var(--bg-card); color:var(--text-main);">
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Guardar',
+            preConfirm: () => {
+                const nombre = document.getElementById('prov-nombre').value.trim();
+                const monto = procesarMontoFormateado(document.getElementById('prov-monto').value);
+                const fecha = document.getElementById('prov-fecha').value;
+                if(!nombre) return false;
+                return { nombre, monto, fecha };
+            }
+        }).then((res) => {
+            if (res.isConfirmed) {
+                const p = res.value;
+                datosApp.proveedores.push({ nombre: p.nombre, saldoPendiente: p.monto, fechaEntrega: p.fecha });
+                if(p.monto > 0 && p.fecha) {
+                    const partes = p.fecha.split('-');
+                    datosApp.recordatorios.push({ proveedor: p.nombre, dia: `${partes[2]}/${partes[1]}/${partes[0]}`, valor: p.monto, fechaRaw: p.fecha });
+                }
+                guardar(); actualizarPantalla(); renderRecordatorios();
+            }
+        });
+    }
+
+    function eliminarProveedor(index, isModalOpen = false) {
+        Swal.fire({ title: '¿Eliminar proveedor?', icon: 'warning', showCancelButton: true, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' }).then((result) => {
+            if (result.isConfirmed) { 
+                datosApp.proveedores.splice(index, 1); 
+                guardar(); actualizarPantalla();
+                if (isModalOpen) verTodosProveedores();
+            }
+        });
+    }
+
+    function verTodosProveedores() {
+        let proveedoresOrdenados = datosApp.proveedores.map((p, idx) => ({ ...p, originalIndex: idx }));
+        proveedoresOrdenados.sort((a, b) => {
+            if (!a.fechaEntrega && !b.fechaEntrega) return 0;
+            if (!a.fechaEntrega) return 1; 
+            if (!b.fechaEntrega) return -1;
+            return new Date(a.fechaEntrega + 'T00:00:00') - new Date(b.fechaEntrega + 'T00:00:00');
+        });
+
+        let html = `<div style="max-height: 60vh; overflow-y: auto; display:flex; flex-direction:column; gap:8px;">`;
+        proveedoresOrdenados.forEach((p) => {
+            let partes = p.fechaEntrega ? p.fechaEntrega.split('-') : [];
+            html += `
+                <div class="item-row" style="margin-bottom:0;">
+                    <div class="info-col">
+                        <span style="font-weight:600;">${p.nombre}</span>
+                        <span style="font-size:12px; color:var(--text-muted);">Deuda: ${formataMoneda(p.saldoPendiente)} • Entrega: ${partes.length>0 ? `${partes[2]}/${partes[1]}/${partes[0]}` : 'Sin fecha'}</span>
+                    </div>
+                    <button class="btn-action btn-del" onclick="eliminarProveedor(${p.originalIndex}, true)">🗑️</button>
+                </div>
+            `;
+        });
+        html += `</div>`;
+        abrirModalGlobal('Todos los Proveedores', html);
+    }
+
+    // CLIENTES / DEUDORES
+    function nuevoCliente() {
+        Swal.fire({
+            title: 'Agregar Fiador',
+            background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff',
+            html: `
+                <input id="cli-nombre" class="swal2-input" placeholder="Nombre" style="margin-bottom:12px; background:var(--bg-card); color:var(--text-main);">
+                <input id="cli-inicial" type="text" class="swal2-input" placeholder="Monto inicial ($ opcional)" style="background:var(--bg-card); color:var(--text-main);" oninput="limpiarYFormatearInput(this)">
+            `,
+            showCancelButton: true,
+            preConfirm: () => {
+                const nombre = document.getElementById('cli-nombre').value.trim();
+                const inicial = procesarMontoFormateado(document.getElementById('cli-inicial').value);
+                if(!nombre) return false;
+                return { nombre, saldo: inicial };
+            }
+        }).then((res) => {
+            if (res.isConfirmed) {
+                const tiempo = obtenerFechaHoraActual();
+                const nuevoH = res.value.saldo > 0 ? [{ tipo: 'fiado', monto: res.value.saldo, fechaHora: tiempo.completa }] : [];
+                datosApp.clientes.push({ nombre: res.value.nombre, saldo: res.value.saldo, fechaUltimo: tiempo.fecha, historial: nuevoH, cambiosNombre: 0 });
+                guardar(); actualizarPantalla();
+            }
+        });
+    }
+
+    function modificarSaldo(index, accion, isModalOpen = false) {
+        const c = datosApp.clientes[index];
+        Swal.fire({ 
+            title: accion === 'fiar' ? `Fiar a ${c.nombre}` : `Abonar de ${c.nombre}`, 
+            input: 'text',
+            inputPlaceholder: 'Digite el monto',
+            showCancelButton: true, 
+            background: datosApp.temaClaro ? '#fff' : '#1a1a1e', 
+            color: datosApp.temaClaro ? '#000' : '#fff',
+            didOpen: () => {
+                const input = Swal.getInput();
+                input.oninput = () => { limpiarYFormatearInput(input); };
+            },
+            preConfirm: (inputValue) => {
+                const valor = procesarMontoFormateado(inputValue);
+                if (isNaN(valor) || valor <= 0) {
+                    Swal.showValidationMessage('Debe ingresar un monto válido');
+                    return false;
+                }
+                return valor;
+            }
+        }).then((res) => {
+            if (res.isConfirmed) {
+                const valor = res.value;
+                let nuevoSaldo = c.saldo + (accion === 'fiar' ? valor : -valor); 
+                if (nuevoSaldo < 0) nuevoSaldo = 0;
+                
+                c.saldo = nuevoSaldo;
+                const tiempo = obtenerFechaHoraActual(); 
+                c.fechaUltimo = tiempo.fecha;
+                if(!c.historial) c.historial = [];
+                c.historial.push({ tipo: accion === 'fiar' ? 'fiado' : 'abono', monto: valor, fechaHora: tiempo.completa });
+                guardar(); actualizarPantalla();
+                if (isModalOpen) filtrarClientesModal();
+            }
+        });
+    }
+
+    function editarNombre(index, isModalOpen = false) {
+        let c = datosApp.clientes[index]; 
+        
+        // NUEVA VALIDACIÓN: Avisar si superó el límite de cambios
+        if (c.cambiosNombre >= 2) {
+            Swal.fire({ 
+                title: 'Límite alcanzado', 
+                text: 'Solo puedes cambiar el nombre de un cliente 2 veces.', 
+                icon: 'warning', 
+                background: datosApp.temaClaro ? '#fff' : '#1a1a1e', 
+                color: datosApp.temaClaro ? '#000' : '#fff' 
+            });
+            return; 
+        }
+
+        Swal.fire({ title: 'Editar Nombre', input: 'text', inputValue: c.nombre, showCancelButton: true, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' }).then((res) => {
+            if (res.isConfirmed && res.value) { 
+                c.nombre = res.value.trim(); c.cambiosNombre += 1; 
+                guardar(); actualizarPantalla();
+                if (isModalOpen) filtrarClientesModal();
+            }
+        });
+    }
+
+    function eliminarCliente(index, isModalOpen = false) {
+        Swal.fire({ title: '¿Eliminar cuenta?', icon: 'warning', showCancelButton: true, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff' }).then((result) => {
+            if (result.isConfirmed) { 
+                datosApp.clientes.splice(index, 1); 
+                guardar(); actualizarPantalla();
+                if (isModalOpen) filtrarClientesModal();
+            }
+        });
+    }
+
+    function verHistorialCliente(index) {
+        const c = datosApp.clientes[index];
+        let filasHtml = '';
+        if(!c.historial || c.historial.length === 0) {
+            filasHtml = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No hay movimientos.</td></tr>`;
+        } else {
+            c.historial.forEach(h => {
+                filasHtml += `<tr><td>${h.fechaHora}</td><td>${h.tipo.toUpperCase()}</td><td class="${h.tipo === 'fiado' ? 'txt-fiado' : 'txt-abono'}">${h.tipo === 'fiado' ? '+' : '-'} ${formataMoneda(h.monto)}</td></tr>`;
+            });
+        }
+        Swal.fire({ title: `Historial de ${c.nombre}`, background: datosApp.temaClaro ? '#fff' : '#1a1a1e', color: datosApp.temaClaro ? '#000' : '#fff', html: `<div style="max-height: 250px; overflow-y: auto;"><table class="historial-tabla"><thead><tr><th>Fecha</th><th>Tipo</th><th>Monto</th></tr></thead><tbody>${filasHtml}</tbody></table></div>` });
+    }
+
+    function cambiarFiltroClientes(tipo) {
+        filtroClienteActual = tipo;
+        document.getElementById('filtro-todos').classList.toggle('active', tipo === 'todos');
+        document.getElementById('filtro-deudores').classList.toggle('active', tipo === 'deudores');
+        actualizarPantalla();
+    }
+
+    function verTodosClientes() {
+        let html = `
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="busqueda-cliente-modal" class="search-input" placeholder="Buscar cliente..." oninput="filtrarClientesModal()" style="margin-bottom: 15px;">
+            </div>
+            <div class="fiados-list" id="lista-fiados-modal" style="max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
+        `;
+        abrirModalGlobal('Todos los Clientes', html);
+        filtrarClientesModal();
+    }
+
+    function filtrarClientesModal() {
+        const query = document.getElementById('busqueda-cliente-modal').value.toLowerCase().trim();
+        const listDiv = document.getElementById('lista-fiados-modal');
+        listDiv.innerHTML = '';
+
+        datosApp.clientes.forEach((c, originalIndex) => {
+            if (query === '' || c.nombre.toLowerCase().includes(query)) {
+                listDiv.innerHTML += `
+                    <div class="item-row" style="margin-bottom: 0;">
+                        <div class="info-col">
+                            <div class="name-row">
+                                <span class="item-name" onclick="verHistorialCliente(${originalIndex})">${c.nombre}</span>
+                                ${c.cambiosNombre < 2 ? `<span class="edit-badge" onclick="editarNombre(${originalIndex}, true)">📝</span>` : ''}
+                            </div>
+                            <span class="item-subtext">Último movimiento: ${c.fechaUltimo}</span>
+                        </div>
+                        <div class="actions-row">
+                            <div class="item-monto ${c.saldo > 0 ? 'monto-deuda' : ''}" style="margin-right:8px; font-size:${c.saldo === 0 ? '13px':'16px'}">${c.saldo === 0 ? 'Al día' : formataMoneda(c.saldo)}</div>
+                            <button class="btn-action btn-add-more" onclick="modificarSaldo(${originalIndex}, 'fiar', true)">+ Fiar</button>
+                            <button class="btn-action btn-pay" onclick="modificarSaldo(${originalIndex}, 'pagar', true)" ${c.saldo === 0 ? 'disabled style="opacity:0.3;"' : ''}>✔</button>
+                            <button class="btn-action btn-del" onclick="eliminarCliente(${originalIndex}, true)">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    function verTodosCierres() {
+        let html = `<div style="max-height: 60vh; overflow-y: auto; display:flex; flex-direction:column; gap:8px;">`;
+        datosApp.historialCierres.forEach((h, index) => {
+            html += `
+                <div class="item-row" style="margin-bottom: 0;">
+                    <div class="info-col">
+                        <span style="font-weight:600; font-size:14px;">📅 Día: ${h.fecha}</span>
+                        <span style="font-size:11px; color:var(--text-muted);">💵 Efec: ${formataMoneda(h.efectivo)} | 📱 Nequi: ${formataMoneda(h.nequi)} | 📉 Egresos: ${formataMoneda(h.egresos || 0)}</span>
+                    </div>
+                    <div class="actions-row">
+                        <span style="font-size:15px; font-weight:700; color:var(--success); margin-right:10px;">Neto: ${formataMoneda(h.total)}</span>
+                        ${(h.egresos || 0) > 0 ? `<button class="btn-action btn-add-more" style="padding:4px 8px; font-size:11px;" onclick="verDetalleGastosHistorico(${index})">👁️ Gastos</button>` : ''}
+                        <button class="btn-action btn-del" style="padding:4px 8px; font-size:11px;" onclick="eliminarCierreHistorico(${index}, true)">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+        html += `</div>`;
+        abrirModalGlobal('Historial de Cierres', html);
+    }
+
+    // RENDERIZADO Y ACTUALIZACIÓN EN PANTALLA PRINCIPAL
+    function actualizarPantalla() {
+        // Cierre de caja en pantalla
+        const totalEfec = datosApp.cierreEfectivo || 0;
+        const totalNeq = datosApp.cierreNequi || 0;
+        const totalEgr = datosApp.cierreEgresos || 0;
+        
+        document.getElementById('caja-efectivo').innerText = formataMoneda(totalEfec);
+        document.getElementById('caja-nequi').innerText = formataMoneda(totalNeq);
+        document.getElementById('caja-egresos').innerText = formataMoneda(totalEgr);
+        document.getElementById('caja-total').innerText = formataMoneda((totalEfec + totalNeq) - totalEgr);
+        
+        // Clientes
+        const queryC = document.getElementById('busqueda-cliente').value.toLowerCase().trim();
+        const listaC = document.getElementById('lista-fiados');
+        const verMasContC = document.getElementById('contenedor-ver-mas-clientes');
+        listaC.innerHTML = ''; verMasContC.innerHTML = '';
+        
+        let clientesFiltrados = datosApp.clientes.map((c, idx) => ({ ...c, originalIndex: idx }));
+        if (queryC !== '') clientesFiltrados = clientesFiltrados.filter(c => c.nombre.toLowerCase().includes(queryC));
+        if (filtroClienteActual === 'deudores') clientesFiltrados = clientesFiltrados.filter(c => c.saldo > 0);
+
+        let cantPersonasDeben = 0; let totalFiadoAcumulado = 0;
+        datosApp.clientes.forEach(c => { if (c.saldo > 0) { totalFiadoAcumulado += c.saldo; cantPersonasDeben++; } });
+        document.getElementById('resumen-fiados').innerText = `${cantPersonasDeben} deben total: ${formataMoneda(totalFiadoAcumulado)}`;
+
+        if (clientesFiltrados.length === 0) {
+            listaC.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:10px;">Ningún cliente coincide.</div>`;
+        } else {
+            // Mostrar límite estricto de 4 clientes en el index
+            clientesFiltrados.slice(0, 4).forEach(c => {
+                listaC.innerHTML += `
+                    <div class="item-row">
+                        <div class="info-col">
+                            <div class="name-row">
+                                <span class="item-name" onclick="verHistorialCliente(${c.originalIndex})">${c.nombre}</span>
+                                ${c.cambiosNombre < 2 ? `<span class="edit-badge" onclick="editarNombre(${c.originalIndex})">📝</span>` : ''}
+                            </div>
+                            <span class="item-subtext">Último: ${c.fechaUltimo}</span>
+                        </div>
+                        <div class="actions-row">
+                            <div class="item-monto ${c.saldo > 0 ? 'monto-deuda' : ''}" style="margin-right:8px; font-size:${c.saldo === 0 ? '13px':'18px'}; color:${c.saldo === 0 ? 'var(--success)':''}">${c.saldo === 0 ? 'Al día' : formataMoneda(c.saldo)}</div>
+                            <button class="btn-action btn-add-more" onclick="modificarSaldo(${c.originalIndex}, 'fiar')">+ Fiar</button>
+                            <button class="btn-action btn-pay" onclick="modificarSaldo(${c.originalIndex}, 'pagar')" ${c.saldo === 0 ? 'disabled style="opacity:0.3;"' : ''}>✔</button>
+                            <button class="btn-action btn-del" onclick="eliminarCliente(${c.originalIndex})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (clientesFiltrados.length > 4) {
+                verMasContC.innerHTML = `<button class="btn-ver-mas" onclick="verTodosClientes()">👁️ Ver todos los Clientes (${clientesFiltrados.length})</button>`;
+            }
+        }
+
+        // Historial de Cierres (Límite estricto de 4 cierres)
+        const listaCierres = document.getElementById('lista-cierres-historicos');
+        const verMasContCierres = document.getElementById('contenedor-ver-mas-cierres');
+        listaCierres.innerHTML = ''; verMasContCierres.innerHTML = '';
+
+        if(datosApp.historialCierres.length === 0) {
+            listaCierres.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">No hay cierres archivados.</div>`;
+        } else {
+            datosApp.historialCierres.slice(0, 4).forEach((h, index) => {
+                listaCierres.innerHTML += `
+                    <div class="item-row" style="padding:10px 15px; background: rgba(128,128,128,0.03);">
+                        <div class="info-col">
+                            <span style="font-weight:600; font-size:14px;">📅 Día: ${h.fecha}</span>
+                            <span style="font-size:11px; color:var(--text-muted);">💵 Efec: ${formataMoneda(h.efectivo)} | 📱 Nequi: ${formataMoneda(h.nequi)} | 📉 Egr: ${formataMoneda(h.egresos || 0)}</span>
+                        </div>
+                        <div class="actions-row">
+                            <span style="font-size:15px; font-weight:700; color:var(--success); margin-right:10px;">Neto: ${formataMoneda(h.total)}</span>
+                            ${(h.egresos || 0) > 0 ? `<button class="btn-action btn-add-more" style="padding:4px 8px; font-size:11px;" onclick="verDetalleGastosHistorico(${index})">👁️ Gastos</button>` : ''}
+                            <button class="btn-action btn-del" style="padding:4px 8px; font-size:11px;" onclick="eliminarCierreHistorico(${index})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if(datosApp.historialCierres.length > 4) {
+                verMasContCierres.innerHTML = `<button class="btn-ver-mas" onclick="verTodosCierres()">👁️ Ver todos los Cierres (${datosApp.historialCierres.length})</button>`;
+            }
+        }
+
+        // PROVEEDORES (Límite de 4 en vista principal, ORDENADOS por fecha más cercana)
+        const listaP = document.getElementById('lista-proveedores');
+        const verMasContP = document.getElementById('contenedor-ver-mas-proveedores');
+        listaP.innerHTML = ''; verMasContP.innerHTML = '';
+
+        let proveedoresOrdenados = datosApp.proveedores.map((p, idx) => ({ ...p, originalIndex: idx }));
+        proveedoresOrdenados.sort((a, b) => {
+            if (!a.fechaEntrega && !b.fechaEntrega) return 0;
+            if (!a.fechaEntrega) return 1; // Colocar al final si no tiene fecha
+            if (!b.fechaEntrega) return -1;
+            return new Date(a.fechaEntrega + 'T00:00:00') - new Date(b.fechaEntrega + 'T00:00:00');
+        });
+
+        if(proveedoresOrdenados.length === 0) {
+            listaP.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:13px; padding:5px;">Sin proveedores.</div>`;
+        } else {
+            proveedoresOrdenados.slice(0, 4).forEach((p) => {
+                let partes = p.fechaEntrega ? p.fechaEntrega.split('-') : [];
+                listaP.innerHTML += `
+                    <div class="item-row">
+                        <div class="info-col">
+                            <span style="font-weight:600;">${p.nombre}</span>
+                            <span style="font-size:12px; color:var(--text-muted);">Deuda: ${formataMoneda(p.saldoPendiente)} • Entrega: ${partes.length>0 ? `${partes[2]}/${partes[1]}/${partes[0]}` : 'Sin fecha'}</span>
+                        </div>
+                        <button class="btn-action btn-del" onclick="eliminarProveedor(${p.originalIndex})">🗑️</button>
+                    </div>
+                `;
+            });
+
+            if (proveedoresOrdenados.length > 4) {
+                verMasContP.innerHTML = `<button class="btn-ver-mas" onclick="verTodosProveedores()">👁️ Ver todos los Proveedores (${proveedoresOrdenados.length})</button>`;
+            }
+        }
+
+        // Renderizado del Diccionario (En sidebar, máx 5 elementos)
+        renderizarDiccionarioSidebar();
+    }
+
+    function renderizarDiccionarioSidebar() {
+        const query = document.getElementById('busqueda-articulo').value.toLowerCase().trim();
+        const listaA = document.getElementById('lista-articulos');
+        const verMasBtnCont = document.getElementById('ver-mas-articulos-btn-cont');
+        const listaF = document.getElementById('lista-items-faltantes');
+        const totalCostoFaltantes = document.getElementById('total-costo-faltantes');
+        
+        listaA.innerHTML = ''; listaF.innerHTML = ''; verMasBtnCont.innerHTML = '';
+        let acumuladoInversionFaltante = 0; let hayFaltantes = false;
+        const unMesEnMs = 30 * 24 * 60 * 60 * 1000;
+
+        let articulosFiltrados = datosApp.articulos.map((a, idx) => ({ ...a, originalIndex: idx }));
+        if (query !== '') {
+            articulosFiltrados = articulosFiltrados.filter(a => a.nombre.toLowerCase().includes(query));
+        }
+
+        // Mostrar solo 5 artículos en el Sidebar
+        articulosFiltrados.slice(0, 5).forEach((a) => {
+            let margen = 0;
+            if(a.venta > a.costo && a.costo > 0) { margen = Math.round(((a.venta - a.costo) / a.venta) * 100); }
+            const sinSurtir = (Date.now() - (a.ultimoSurtido || Date.now())) > unMesEnMs;
+
+            listaA.innerHTML += `
+                <div class="item-row" style="padding:10px 12px;">
+                    <div class="info-col">
+                        <div class="name-row">
+                            <span style="font-weight:600; font-size:14px;">${a.nombre}</span>
+                            ${margen > 0 ? `<span class="margin-badge">Ganancia: ${margen}%</span>` : ''}
+                            ${sinSurtir ? `<span style="font-size:9px; font-weight:600; background:rgba(239,68,68,0.15); color:var(--danger); padding:2px 6px; border-radius:4px;">⚠️ Sin surtir hace +1 mes</span>` : ''}
+                        </div>
+                        <span style="font-size:11px; color:var(--text-muted);">Costo: ${formataMoneda(a.costo)} | Venta: <strong>${formataMoneda(a.venta)}</strong></span>
+                    </div>
+                    <div class="actions-row">
+                        <button class="btn-cart ${a.faltante ? 'active' : ''}" onclick="conmutarFaltante(${a.originalIndex})">🛒</button>
+                        <button class="btn-action btn-add-more" style="padding:5px 8px;" onclick="editarArticulo(${a.originalIndex})">✏️</button>
+                        <button class="btn-action btn-del" style="padding:5px 8px; font-size:11px;" onclick="eliminarArticulo(${a.originalIndex})">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        if (articulosFiltrados.length > 5) {
+            verMasBtnCont.innerHTML = `<button class="btn-ver-mas" onclick="verTodosArticulos()">👁️ Ver todos los Artículos (${articulosFiltrados.length})</button>`;
+        }
+
+        // Construir la lista de Faltantes con Cantidades (Sin límite)
+        datosApp.articulos.forEach((a) => {
+            if(a.faltante) {
+                if(!hayFaltantes) { listaF.innerHTML = ''; hayFaltantes = true; }
+                const cantidadVal = a.cantidadPedir || 1;
+                acumuladoInversionFaltante += (a.costo * cantidadVal);
+                listaF.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; background:rgba(128,128,128,0.1); padding:6px 10px; border-radius:6px; color:var(--text-main);">
+                        <span>• (${cantidadVal}) ${a.nombre}</span>
+                        <span style="color:var(--text-muted);">Total: ${formataMoneda(a.costo * cantidadVal)}</span>
+                    </div>
+                `;
+            }
+        });
+
+        if(!hayFaltantes) listaF.innerHTML = 'Ningún artículo marcado como faltante.';
+        totalCostoFaltantes.innerText = formataMoneda(acumuladoInversionFaltante);
+    }
+
+    function renderRecordatorios() {
+        const contenedor = document.getElementById('contenedor-recordatorios');
+        contenedor.innerHTML = '';
+        if(!datosApp.recordatorios) datosApp.recordatorios = [];
+        const hoy = new Date(); hoy.setHours(0,0,0,0);
+
+        datosApp.recordatorios.forEach((rec, index) => {
+            let mostrarAlerta = true;
+            if(rec.fechaRaw) {
+                const fechaLimite = new Date(rec.fechaRaw + 'T00:00:00');
+                if(Math.ceil((fechaLimite - hoy) / (1000 * 60 * 60 * 24)) > 2) mostrarAlerta = false;
+            }
+            if(mostrarAlerta) {
+                contenedor.innerHTML += `
+                    <div class="alert-box">
+                        <div class="alert-title">🔔 PROVEEDOR PRÓXIMO: ${rec.proveedor.toUpperCase()}</div>
+                        <div class="alert-text">Entrega/Pago el <span style="color:var(--warning);">${rec.dia}</span>. <span style="display:block; font-size:22px; color:var(--text-main); margin-top:5px;">Valor: ${formataMoneda(rec.valor)}</span></div>
+                        <button class="alert-btn" onclick="eliminarRecordatorio(${index})">✔ Confirmar y Quitar Aviso</button>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    function eliminarRecordatorio(index) { datosApp.recordatorios.splice(index, 1); guardar(); renderRecordatorios(); }
+
+    // INICIALIZACIÓN DE LA APLICACIÓN
+    verificarBloqueoSeguridad();
+    aplicarTemaVisual();
+    renderRecordatorios();
+    actualizarPantalla();
+</script>
+</body>
+</html>
